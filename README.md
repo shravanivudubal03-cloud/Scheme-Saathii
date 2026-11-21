@@ -22,3 +22,9 @@ The current catalog covers three Maharashtra schemes and stores saved schemes, p
 4. Add secure backend storage and authentication only with explicit consent and a data retention plan.
 5. Integrate official application endpoints or provide downloadable, department-approved drafts. The current checklist is not a submitted form.
 6. Add automated coverage for rule boundaries, exclusions, multilingual fact extraction, and source freshness.
+
+## Ollama fact extraction
+
+The description is sent to the configured Ollama service to propose structured facts. Citizens review and can correct every fact before the deterministic matcher in `src/eligibility.js` checks the catalog. Ollama never selects schemes or decides eligibility. Do not include Aadhaar, bank, or other sensitive identifiers in the description.
+
+For local development, copy `.env.example` to `.env.local`, choose an Ollama model available on your machine, and run the site through Vercel's local development server so `/api/extract` is available. For a Vercel deployment, configure `OLLAMA_BASE_URL` and `OLLAMA_MODEL` in the project environment. The Ollama URL must be reachable from Vercel; `localhost` on Vercel points to the function itself, not your computer. The app shows an error when Ollama is unavailable and does not silently substitute an AI eligibility decision.
