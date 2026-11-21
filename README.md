@@ -1,30 +1,51 @@
 # Scheme Saathi
 
-A low-friction citizen benefits discovery MVP. People can describe their situation in English, Hindi, or Marathi; review the interpreted facts; receive deterministic rule-based scheme matches with reasons, document checklists, and official government sources; and keep application preparation drafts locally.
+Scheme Saathi is a voice-friendly, English/Hindi/Marathi benefits discovery pilot. A citizen can describe a household in their own words or use a guided profile. The app turns a story into reviewable facts, checks those facts against explicit scheme rules, shows the reasons and official source, and creates a local preparation draft.
+
+## What is in the MVP
+
+- Story input with browser speech recognition and read-aloud results.
+- Ollama structured fact extraction through `POST /api/extract`; a guided question path remains usable when Ollama is not configured.
+- A citizen review step where unknown facts remain unknown until the person answers them.
+- Deterministic rules and three result states: core conditions match, more information needed, or not a match.
+- A sourced catalogue of six schemes, with search and category filters.
+- Saved schemes, editable application-preparation drafts, document checklist progress, and print-to-PDF.
+- English, Marathi, and Hindi page content, a larger-text preference, responsive layout, and local browser storage.
 
 ## Run locally
 
-Open `index.html` in a modern browser, or serve the project directory with any static HTTP server. No build step or API key is required. Deploy as a static site on Vercel; no build command or output directory is needed.
+1. Install Ollama and pull a model that supports structured output (for example, `qwen3:4b`).
+2. Copy `.env.example` to `.env.local` and set `OLLAMA_MODEL` to the model you pulled. Keep `OLLAMA_BASE_URL=http://localhost:11434` for local use.
+3. Run the app with the Vercel development server (`vercel dev`) so the `/api/extract` function is available.
+4. Open the local URL printed by Vercel. Without Ollama, use **I’d rather answer questions** to try the deterministic rules flow.
+
+The static page can also be served without the function, but story extraction will show the manual guided profile as a fallback.
+
+## Deploy to Vercel
+
+Set `OLLAMA_BASE_URL` and `OLLAMA_MODEL` in the Vercel project environment. A deployed function cannot reach Ollama at `localhost`; use an Ollama host that is reachable by Vercel, then redeploy. The story is sent to that configured endpoint for fact extraction only. Guided-profile facts stay in the browser.
 
 ## Eligibility architecture
 
-`src/eligibility.js` is the only eligibility matcher. It receives structured facts and applies explicit predicates from `data/schemes.js`. It does not use an LLM to select schemes. The current MVP uses a conservative multilingual phrase extractor for demonstration; unknown values remain unknown, and the user should review the interpreted details before matching. A production extraction service can replace `extractFacts` with a schema-constrained model that returns proposed JSON facts only. Validate that JSON, show it to the citizen for correction, and pass accepted facts to `matchSchemes`. Never expose a model-selected scheme ID as an eligibility decision.
+`api/extract.mjs` asks Ollama to return only a fixed JSON schema of candidate facts. The endpoint limits request size and normalizes the response. The page presents those facts for review and correction. `src/eligibility.js` evaluates explicit predicates in `data/schemes.js`; Ollama never chooses a scheme, interprets an eligibility rule, or determines a match. Missing answers are surfaced as “needs details.”
 
-## Data and privacy
+The rules represent a curated summary of core scheme conditions, not every administrative check or an official decision. Scheme cards link directly to the relevant government source and display additional verification notes. Departments make final determinations and can update rules; keep the catalogue current before using this beyond a demo.
 
-The current catalog covers three Maharashtra schemes and stores saved schemes, preparation checklists, and language preference in the browser's local storage. It does not collect or transmit personal information. Speech uses the browser's native Web Speech API where available. Rules and benefits are a curated snapshot; each result links to its official source and final eligibility remains with the administering department.
+## Privacy and scope
 
-## Production roadmap
+Stories sent through the Ollama path go to the Vercel function and the Ollama host configured by the project. Do not enter Aadhaar, bank, or other sensitive identifiers. The guided flow, saved schemes, text-size choice, and draft details are stored in browser local storage only. No application is submitted. The current catalogue is a focused Maharashtra pilot plus central schemes available to Maharashtra residents, not a complete national directory.
 
-1. Expand a reviewed, versioned scheme catalog with department sources and effective dates.
-2. Add a schema-validated Hindi/Marathi/English extraction API and user confirmation step.
-3. Add voice playback and accessible assisted flows, with a human help option.
-4. Add secure backend storage and authentication only with explicit consent and a data retention plan.
-5. Integrate official application endpoints or provide downloadable, department-approved drafts. The current checklist is not a submitted form.
-6. Add automated coverage for rule boundaries, exclusions, multilingual fact extraction, and source freshness.
+## Scheme sources
 
-## Ollama fact extraction
+Each scheme record in `data/schemes.js` has its own official source link. The current pilot includes PM-KISAN, Sanjay Gandhi Niradhar Anudan Yojana, Lek Ladki Yojana, Indira Gandhi National Old Age Pension, Ayushman Vay Vandana Card, and Pradhan Mantri Ujjwala Yojana.
 
-The description is sent to the configured Ollama service to propose structured facts. Citizens review and can correct every fact before the deterministic matcher in `src/eligibility.js` checks the catalog. Ollama never selects schemes or decides eligibility. Do not include Aadhaar, bank, or other sensitive identifiers in the description.
+## Project structure
 
-For local development, copy `.env.example` to `.env.local`, choose an Ollama model available on your machine, and run the site through Vercel's local development server so `/api/extract` is available. For a Vercel deployment, configure `OLLAMA_BASE_URL` and `OLLAMA_MODEL` in the project environment. The Ollama URL must be reachable from Vercel; `localhost` on Vercel points to the function itself, not your computer. The app shows an error when Ollama is unavailable and does not silently substitute an AI eligibility decision.
+```text
+api/extract.mjs        Ollama fact-extraction endpoint
+data/schemes.js        Curated scheme records, conditions, sources, documents
+src/eligibility.js     Deterministic rule evaluation and missing-fact states
+src/main.js            UI, localization, voice, saved items, preparation drafts
+index.html             Accessible app shell and views
+styles.css             Responsive visual system
+```

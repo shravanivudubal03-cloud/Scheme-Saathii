@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#123b32" />
-  <meta name="description" content="Scheme Saathi helps families discover government schemes with clear eligibility checks and official sources." />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f8f7f3" />
+  <meta name="description" content="Scheme Saathi helps you explore government benefits, understand eligibility and prepare the next step." />
   <title>Scheme Saathi — Benefits, made easier</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -12,38 +12,92 @@
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="sidebar">
-      <a class="brand" href="#home" aria-label="Scheme Saathi home"><span class="brand-mark">स</span><span>scheme<span class="brand-light">saathi</span><small>YOUR BENEFITS, WITH YOU</small></span></a>
-      <div class="side-label">YOUR SPACE</div>
-      <button class="nav-item active" data-view="discover"><span>⌕</span><span data-copy="navDiscover">Find schemes</span></button>
-      <button class="nav-item" data-view="saved"><span>♡</span><span data-copy="navSaved">Saved schemes</span><i id="savedCount">0</i></button>
-      <button class="nav-item" data-view="applications"><span>▤</span><span data-copy="navApplications">My applications</span></button>
-      <div class="sidebar-bottom"><div class="help-card"><div class="help-icon">✦</div><strong data-copy="needHelp">Need a little help?</strong><p data-copy="helpText">A simple guide can make every step easier.</p><button id="guideBtn" class="text-link" data-copy="seeGuide">See how it works <span>→</span></button></div><div class="privacy-note"><span>◉</span><span data-copy="privateNote">Your details stay on this device.</span></div></div>
-    </aside>
-    <main class="main-area">
-      <header class="topbar"><div class="breadcrumbs"><span data-copy="breadcrumbHome">Home</span><span class="crumb-slash">/</span><strong id="crumbCurrent" data-copy="navDiscover">Find schemes</strong></div><div class="top-actions"><div class="language-switch" aria-label="Choose language"><button data-lang="en" class="selected">EN</button><span></span><button data-lang="hi">हिं</button><span></span><button data-lang="mr">मरा</button></div><button class="profile-button" aria-label="Profile">S</button></div></header>
-      <section id="view-discover" class="view active-view">
-        <div class="welcome-row"><div><div class="eyebrow"><span class="eyebrow-line"></span><span data-copy="eyebrow">A FRIEND FOR YOUR NEXT STEP</span></div><h1 data-copy="headline">The support you need<br/><em>is closer than you think.</em></h1><p class="subhead" data-copy="subhead">Tell us a little about your family. We’ll check official scheme rules and explain what may fit.</p></div><div class="hero-art" aria-hidden="true"><div class="art-sun"></div><div class="art-hill hill-back"></div><div class="art-hill hill-front"></div><div class="art-leaf leaf-one">✦</div><div class="art-leaf leaf-two">✧</div><div class="art-stamp">साथ<br/>साथ</div></div></div>
-        <div class="progress-wrap"><div class="progress-label"><span id="stepLabel">STEP 1 OF 2</span><span id="progressHint">A few details help us check the rules</span></div><div class="progress-track"><span id="progressBar"></span></div></div>
-        <div id="intakePanel" class="intake-panel">
-          <div class="panel-heading"><div><span class="section-kicker" data-copy="yourStory">YOUR STORY</span><h2 data-copy="tellUs">Let’s start with you</h2><p data-copy="plainWords">You can write or speak in your own words. No special terms needed.</p></div><div class="step-number">01 <span>/ 02</span></div></div>
-          <div class="input-label-row"><label for="story" data-copy="storyLabel">Tell us about your family and what you need</label><button id="micBtn" class="mic-button" aria-label="Speak your answer"><span>●</span><span data-copy="speak">Speak</span><span class="mic-wave">)))</span></button></div>
-          <textarea id="story" rows="5" placeholder="For example: I live in a village in Maharashtra. I am 42, have two daughters, and our family has an orange ration card. My husband farms our 1-acre land." aria-label="Describe your situation"></textarea>
-          <div class="privacy-hint"><span>♧</span><span data-copy="privacyHint">Your story is sent to Ollama to extract details. Please don’t share Aadhaar, bank account, or other sensitive numbers.</span></div>
-          <div class="quick-fields"><div class="quick-field"><label for="state" data-copy="stateLabel">Where do you live?</label><select id="state"><option value="Maharashtra">Maharashtra</option><option value="Other">Another state</option></select></div><div class="quick-field"><label for="familyType" data-copy="familyLabel">What best describes you?</label><select id="familyType"><option value="">Choose one (optional)</option><option value="farmer">Farmer / शेती</option><option value="woman">Woman or mother / महिला</option><option value="disability">Person with disability / दिव्यांग</option><option value="senior">Senior citizen / ज्येष्ठ नागरिक</option><option value="student">Student / विद्यार्थी</option><option value="other">Something else</option></select></div></div>
-          <div class="panel-footer"><span class="secure-label"><span>✓</span><span data-copy="rulesFirst">Rules checked from official sources</span></span><button id="checkBtn" class="primary-button"><span data-copy="checkSchemes">Check my schemes</span><span>→</span></button></div>
+  <a class="skip-link" href="#main" data-i18n="skip">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="#discover" aria-label="Scheme Saathi home" data-view-link="discover">
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 5 34 13v14L20 35 6 27V13z"/><path d="M13 25c5-1 10-5 13-11M13 16c4 0 7 2 9 5M17 29c1-4 4-7 9-9"/></svg></span>
+      <span class="brand-name">scheme<span>saathi</span><small data-i18n="brandTag">YOUR BENEFITS, WITH YOU</small></span>
+    </a>
+    <nav class="main-nav" aria-label="Main navigation">
+      <button class="nav-link active" data-view="discover" data-i18n="navDiscover">Find schemes</button>
+      <button class="nav-link" data-view="explore" data-i18n="navExplore">Explore</button>
+      <button class="nav-link" data-view="saved"><span data-i18n="navSaved">Saved</span><span id="savedCount" class="nav-count">0</span></button>
+      <button class="nav-link" data-view="applications" data-i18n="navApplications">My preparation</button>
+    </nav>
+    <div class="header-tools">
+      <div class="language-switch" role="group" aria-label="Choose language">
+        <button data-lang="en" class="selected" aria-pressed="true">EN</button>
+        <button data-lang="mr" aria-pressed="false">मराठी</button>
+        <button data-lang="hi" aria-pressed="false">हिंदी</button>
+      </div>
+      <button id="textSizeBtn" class="icon-button" aria-label="Increase text size" title="Increase text size">Aa</button>
+    </div>
+  </header>
+
+  <main id="main" class="page-wrap">
+    <section id="view-discover" class="view active-view" aria-labelledby="heroTitle">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="eyebrow-dot"></span><span data-i18n="pilotLabel">MAHARASHTRA PILOT · 4 VERIFIED SCHEMES</span></div>
+          <h1 id="heroTitle" data-i18n="heroTitle">The support you’re looking for<br /><em>could be closer than you think.</em></h1>
+          <p class="hero-subtitle" data-i18n="heroSubtitle">Tell us a little about your life. We’ll help you find schemes, understand the rules and prepare your next step.</p>
+          <div class="hero-points">
+            <span><b>✓</b><span data-i18n="heroPoint1">Rules checked, never guessed</span></span>
+            <span><b>↗</b><span data-i18n="heroPoint2">Every scheme links to its official source</span></span>
+          </div>
         </div>
-        <div id="results" class="results-section hidden"></div>
-        <div class="trust-row"><div><span class="trust-icon">✓</span><span data-copy="trustRules">Eligibility comes from scheme rules</span></div><span class="trust-dot">·</span><div><span class="trust-icon">↗</span><span data-copy="trustSources">Every result links to an official source</span></div></div>
+        <div class="hero-illustration" aria-hidden="true">
+          <div class="sun-orbit"></div><div class="illustration-sun"></div><div class="hill hill-one"></div><div class="hill hill-two"></div>
+          <div class="home-shape"><div class="roof"></div><div class="house"><span class="window"></span><span class="door"></span></div></div>
+          <span class="floating-leaf leaf-a">✦</span><span class="floating-leaf leaf-b">✧</span><span class="illustration-caption">साथी · साथी</span>
+        </div>
+      </div>
+
+      <div class="trust-strip">
+        <span class="trust-item"><span class="trust-icon green">✓</span><span data-i18n="trustRules">Eligibility checked by clear rules</span></span>
+        <span class="trust-divider"></span>
+        <span class="trust-item"><span class="trust-icon saffron">↗</span><span data-i18n="trustSources">Official sources on every scheme</span></span>
+        <span class="trust-divider"></span>
+        <span class="trust-item"><span class="trust-icon blue">◉</span><span data-i18n="trustPrivate">Your notes stay on this device</span></span>
+      </div>
+
+      <section class="copilot-card" aria-labelledby="storyHeading">
+        <div class="card-topline"><div class="assistant-mark" aria-hidden="true">✳</div><div class="copilot-heading"><span class="section-label" data-i18n="copilotLabel">YOUR SCHEME COPILOT</span><h2 id="storyHeading" data-i18n="storyTitle">What’s your situation?</h2></div><span class="step-pill"><span class="step-dot"></span><span data-i18n="stepOne">STEP 1 OF 2</span></span></div>
+        <p class="card-intro" data-i18n="storyIntro">Write or speak naturally. A few details about your household can help us check the rules.</p>
+        <label class="sr-only" for="story" data-i18n="storyLabel">Describe your situation</label>
+        <div class="story-input-wrap"><textarea id="story" rows="4" maxlength="6000" data-i18n-placeholder="storyPlaceholder" placeholder="For example: We live in Maharashtra. I farm our family land, and my wife is 42. We have two daughters and an orange ration card…"></textarea><button id="micBtn" class="voice-button" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3m-4 0h8"/></svg><span data-i18n="speak">Speak</span></button></div>
+        <div class="input-meta"><span class="privacy-copy"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2 17 5v5c0 4-3 6.5-7 8-4-1.5-7-4-7-8V5z"/><path d="m7 10 2 2 4-4"/></svg><span data-i18n="privacyStory">Your story is sent to Ollama for fact extraction. Never include Aadhaar or bank numbers.</span></span><span id="charCount">0 / 6,000</span></div>
+        <div class="example-row"><span data-i18n="tryExample">Try:</span><button class="example-chip" data-example="farmer" data-i18n="exampleFarmer">Farmer family</button><button class="example-chip" data-example="girl" data-i18n="exampleGirl">Daughter in school</button><button class="example-chip" data-example="senior" data-i18n="exampleSenior">Older parent</button></div>
+        <div id="ollamaNotice" class="inline-notice hidden" role="status"><span class="notice-icon">i</span><div><strong data-i18n="manualFallbackTitle">Let’s keep going</strong><p data-i18n="manualFallbackText">The language service isn’t connected right now. You can answer a few simple questions instead.</p></div><button id="openGuided" class="text-button" data-i18n="openQuestions">Answer questions →</button></div>
+        <div class="copilot-actions"><button id="openGuidedSecondary" class="secondary-button"><span data-i18n="guidedAlternative">I’d rather answer questions</span><span aria-hidden="true">↗</span></button><button id="checkBtn" class="primary-button"><span data-i18n="checkSchemes">Find my schemes</span><span class="button-arrow" aria-hidden="true">→</span></button></div>
+        <div id="loadingMessage" class="loading-message hidden" role="status"><span class="spinner"></span><span data-i18n="readingStory">Understanding your story…</span></div>
       </section>
-      <section id="view-saved" class="view"><div class="eyebrow"><span class="eyebrow-line"></span><span>YOUR SHORTLIST</span></div><h1 data-copy="savedTitle">Schemes you’ve saved</h1><p class="subhead" data-copy="savedSub">Keep useful schemes close while you decide what to do next.</p><div id="savedList" class="saved-list"></div></section>
-      <section id="view-applications" class="view"><div class="eyebrow"><span class="eyebrow-line"></span><span>YOUR NEXT STEPS</span></div><h1 data-copy="appsTitle">Application drafts</h1><p class="subhead" data-copy="appsSub">Start with a simple checklist. You stay in control of every detail.</p><div id="applicationList" class="application-list"></div></section>
-      <footer class="page-footer"><span>© 2026 Scheme Saathi</span><span data-copy="footerNote">A helpful guide, not a government office. Please confirm final eligibility with the department.</span></footer>
-    </main>
-  </div>
+
+      <section class="moments-section" aria-labelledby="momentsTitle"><div class="section-heading"><div><span class="section-label" data-i18n="browseLabel">EXPLORE A DIFFERENT WAY</span><h2 id="momentsTitle" data-i18n="momentsTitle">Start with what matters to you</h2></div><button class="text-button" data-go="explore"><span data-i18n="seeAll">See all schemes</span><span>→</span></button></div>
+        <div class="moment-grid">
+          <button class="moment-card" data-category="farming"><span class="moment-icon icon-farm">⌁</span><span><strong data-i18n="catFarming">Farming</strong><small data-i18n="catFarmingHint">Support for cultivators</small></span><span class="moment-arrow">→</span></button>
+          <button class="moment-card" data-category="family"><span class="moment-icon icon-family">✿</span><span><strong data-i18n="catFamily">Women & children</strong><small data-i18n="catFamilyHint">Help for every new chapter</small></span><span class="moment-arrow">→</span></button>
+          <button class="moment-card" data-category="support"><span class="moment-icon icon-support">♡</span><span><strong data-i18n="catSupport">Monthly support</strong><small data-i18n="catSupportHint">A little more certainty</small></span><span class="moment-arrow">→</span></button>
+          <button class="moment-card" data-category="senior"><span class="moment-icon icon-senior">◷</span><span><strong data-i18n="catSenior">For older adults</strong><small data-i18n="catSeniorHint">Support for later life</small></span><span class="moment-arrow">→</span></button>
+          <button class="moment-card" data-category="health"><span class="moment-icon icon-health">+</span><span><strong data-i18n="catHealth">Health cover</strong><small data-i18n="catHealthHint">Care for older family</small></span><span class="moment-arrow">→</span></button>
+          <button class="moment-card" data-category="energy"><span class="moment-icon icon-energy">♨</span><span><strong data-i18n="catEnergy">Clean cooking</strong><small data-i18n="catEnergyHint">A safer cooking option</small></span><span class="moment-arrow">→</span></button>
+        </div>
+      </section>
+      <div class="scope-note"><span>✳</span><p data-i18n="scopeNote">Scheme Saathi is a Maharashtra pilot. We currently cover a focused set of schemes; we’ll keep growing the verified catalogue.</p><button class="text-button" data-go="explore" data-i18n="browsePilot">Browse the pilot →</button></div>
+    </section>
+
+    <section id="view-explore" class="view" aria-labelledby="exploreTitle"><div class="page-intro"><span class="section-label" data-i18n="exploreLabel">THE VERIFIED CATALOGUE</span><h1 id="exploreTitle" data-i18n="exploreTitle">Explore schemes</h1><p data-i18n="exploreSubtitle">Browse the Maharashtra pilot catalogue. Each scheme includes its source, conditions and documents to prepare.</p></div><div class="catalog-toolbar"><label class="search-box"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg><input id="schemeSearch" type="search" data-i18n-placeholder="searchPlaceholder" placeholder="Search schemes or support…"/><kbd>/</kbd></label><div id="categoryFilters" class="filter-row" role="group" aria-label="Filter by category"></div></div><div id="catalogGrid" class="catalog-grid"></div><p class="catalog-footnote" data-i18n="catalogNote">Information is a summary, not an application decision. Always check the department’s current instructions.</p></section>
+
+    <section id="view-results" class="view" aria-labelledby="resultsTitle"><div id="resultsContent"></div></section>
+    <section id="view-saved" class="view" aria-labelledby="savedTitle"><div class="page-intro"><span class="section-label" data-i18n="savedLabel">YOUR SHORTLIST</span><h1 id="savedTitle" data-i18n="savedTitle">Saved schemes</h1><p data-i18n="savedSubtitle">Keep the schemes that matter close at hand.</p></div><div id="savedGrid" class="catalog-grid"></div></section>
+    <section id="view-applications" class="view" aria-labelledby="applicationsTitle"><div class="page-intro"><span class="section-label" data-i18n="prepLabel">ONE STEP AT A TIME</span><h1 id="applicationsTitle" data-i18n="applicationsTitle">Your preparation</h1><p data-i18n="applicationsSubtitle">Collect documents, keep your notes and prepare a draft for your next visit.</p></div><div class="prep-banner"><span class="prep-banner-icon">▤</span><div><strong data-i18n="prepBannerTitle">Your information stays yours</strong><p data-i18n="prepBannerText">Drafts are stored only in this browser. Nothing is submitted to a government office.</p></div><button id="clearDrafts" class="text-button" data-i18n="clearDrafts">Clear drafts</button></div><div id="applicationList" class="application-list"></div></section>
+
+    <footer class="site-footer"><span>© 2026 Scheme Saathi</span><span data-i18n="footerDisclaimer">A citizen guide, not a government office. Final eligibility is decided by the department.</span><button id="guideBtn" class="footer-link" data-i18n="howItWorks">How it works</button></footer>
+  </main>
+
+  <dialog id="guidedDialog" class="guided-dialog"><form id="guidedForm" method="dialog"><div class="dialog-top"><div><span class="section-label" data-i18n="guidedEyebrow">A FEW SIMPLE QUESTIONS</span><h2 data-i18n="guidedTitle">Let’s build your profile</h2><p data-i18n="guidedSubtitle">Answer what you can. Skip anything you don’t know.</p></div><button id="closeGuided" type="button" class="dialog-close" aria-label="Close">×</button></div><div class="guided-fields" id="guidedFields"></div><div class="dialog-footer"><span class="privacy-copy"><span class="trust-icon blue">◉</span><span data-i18n="localOnly">Saved in this browser only</span></span><button class="primary-button" value="default" data-i18n="reviewAnswers">Review my answers →</button></div></form></dialog>
+  <dialog id="guideDialog" class="guide-dialog"><button class="dialog-close" id="closeGuide" aria-label="Close">×</button><div class="assistant-mark">✳</div><span class="section-label" data-i18n="guideLabel">HOW SCHEME SAATHI WORKS</span><h2 data-i18n="guideTitle">A clear path, one step at a time.</h2><div class="guide-steps"><article><b>01</b><strong data-i18n="guideStep1">Tell us about your life</strong><p data-i18n="guideStep1Body">Write, speak, or answer a few simple questions. You decide what to share.</p></article><article><b>02</b><strong data-i18n="guideStep2">Check your details</strong><p data-i18n="guideStep2Body">The language model extracts possible facts. You review and correct them before anything is matched.</p></article><article><b>03</b><strong data-i18n="guideStep3">Prepare your next step</strong><p data-i18n="guideStep3Body">A fixed rules engine checks scheme conditions. Save a scheme and print a preparation draft when ready.</p></article></div><p class="dialog-note" data-i18n="guideNote">This is a small, verified pilot. It gives guidance, not a government approval.</p></dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <dialog id="guideDialog" class="guide-dialog"><button class="dialog-close" id="closeGuide" aria-label="Close">×</button><div class="section-kicker">HOW SCHEME SAATHI WORKS</div><h2>A clear path, one step at a time.</h2><div class="guide-steps"><div><b>01</b><strong>Tell us your situation</strong><p>Write or speak in Hindi, Marathi, or English. You can change any detail before a match.</p></div><div><b>02</b><strong>We check the scheme rules</strong><p>A fixed rules engine compares your details with published eligibility conditions. It does not guess.</p></div><div><b>03</b><strong>Understand and prepare</strong><p>See why a scheme matched, what documents to gather, and start a draft checklist.</p></div></div><p class="dialog-note">This MVP checks a small set of schemes. Official links are shown on every result.</p></dialog>
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>
