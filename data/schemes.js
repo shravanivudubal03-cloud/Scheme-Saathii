@@ -1,0 +1,30 @@
+// Curated MVP catalog. Rules are explicit predicates; the language layer never selects a scheme.
+export const schemes = [
+  {
+    id: 'pm-kisan', name: 'PM-KISAN Samman Nidhi', shortName: 'PM-KISAN', category: 'FARMING', categoryIcon: '⌁', amount: '₹6,000 / year', amountHi: '₹6,000 प्रति वर्ष', amountMr: '₹६,००० प्रति वर्ष',
+    summary: 'Income support paid in three instalments to eligible landholding farmer families.', summaryHi: 'पात्र जमीनधारक शेतकरी कुटुंबांना तीन हप्त्यांत आर्थिक मदत.', summaryMr: 'पात्र जमीनधारक शेतकरी कुटुंबांना तीन हप्त्यांत आर्थिक मदत.',
+    rule: facts => facts.state && facts.farmer === true && facts.landOwned === true && facts.incomeTaxPayer === false && facts.governmentEmployee === false && facts.otherPmKisanExclusion === false,
+    checks: ['You said your family farms and owns agricultural land.', 'No exclusion was identified in your answers.'], checksHi: ['आपण सांगितले की आपले कुटुंब शेती करते आणि शेतीची जमीन मालकीची आहे.', 'आपल्या उत्तरांमध्ये अपात्रतेची अट आढळली नाही.'], checksMr: ['आपण सांगितले की आपले कुटुंब शेती करते आणि शेतीची जमीन मालकीची आहे.', 'आपल्या उत्तरांमध्ये अपात्रतेची अट आढळली नाही.'],
+    docs: ['Aadhaar card', 'Land ownership / RoR record', 'Bank passbook (account linked to Aadhaar)', 'Mobile number'], docsHi: ['आधार कार्ड', 'जमीन मालकीचा / हक्क अभिलेख', 'बँक पासबुक (आधारशी जोडलेले खाते)', 'मोबाइल नंबर'], docsMr: ['आधार कार्ड', 'जमीन मालकीचा / हक्क अभिलेख', 'बँक पासबुक (आधारशी जोडलेले खाते)', 'मोबाइल नंबर'],
+    source: 'PM-KISAN official portal', url: 'https://pmkisan.gov.in/', detailUrl: 'https://pmkisan.gov.in/Documents/FAQPMKISAN.pdf', sourceLabel: 'Official PM-KISAN portal + FAQ',
+    note: 'Eligibility depends on land records and listed exclusions; the department makes the final determination.'
+  },
+  {
+    id: 'sanjay-gandhi', name: 'Sanjay Gandhi Niradhar Anudan Yojana', shortName: 'Sanjay Gandhi Niradhar', category: 'MONTHLY SUPPORT', categoryIcon: '♡', amount: '₹1,500 / month', amountHi: '₹1,500 प्रति माह', amountMr: '₹१,५०० प्रति महिना',
+    summary: 'Monthly assistance for eligible people in Maharashtra who are without support or unable to earn a livelihood.', summaryHi: 'महाराष्ट्रातील पात्र निराधार किंवा उपजीविका करू न शकणाऱ्या व्यक्तींना मासिक मदत.', summaryMr: 'महाराष्ट्रातील पात्र निराधार किंवा उपजीविका करू न शकणाऱ्या व्यक्तींना मासिक मदत.',
+    rule: facts => facts.state === 'Maharashtra' && facts.age >= 18 && facts.age < 65 && facts.supportNeed === true && (facts.bpl === true || (Number.isFinite(facts.annualIncome) && facts.annualIncome <= 21000)),
+    checks: ['You are between 18 and 64 years old.', 'You described a qualifying support need.', 'You said your household is BPL or annual income is at most ₹21,000.'], checksHi: ['आपले वय १८ ते ६४ वर्षे आहे.', 'आपण पात्र सहाय्याची गरज सांगितली.', 'आपले कुटुंब BPL आहे किंवा वार्षिक उत्पन्न ₹२१,००० पर्यंत आहे.'], checksMr: ['आपले वय १८ ते ६४ वर्षे आहे.', 'आपण पात्र सहाय्याची गरज सांगितली.', 'आपले कुटुंब BPL आहे किंवा वार्षिक उत्पन्न ₹२१,००० पर्यंत आहे.'],
+    docs: ['Age proof', 'Income certificate or BPL proof', 'Aadhaar card', 'Bank passbook', 'Proof of qualifying condition (if applicable)'], docsHi: ['वयाचा पुरावा', 'उत्पन्न प्रमाणपत्र किंवा BPL पुरावा', 'आधार कार्ड', 'बँक पासबुक', 'पात्र परिस्थितीचा पुरावा (लागू असल्यास)'], docsMr: ['वयाचा पुरावा', 'उत्पन्न प्रमाणपत्र किंवा BPL पुरावा', 'आधार कार्ड', 'बँक पासबुक', 'पात्र परिस्थितीचा पुरावा (लागू असल्यास)'],
+    source: 'Maharashtra Social Justice & Special Assistance Department', url: 'https://sjsa.maharashtra.gov.in/en/scheme/sanjay-gandhi-niradhar-anudan-yojana/', detailUrl: 'https://sjsa.maharashtra.gov.in/scheme/%E0%A4%B8%E0%A4%82%E0%A4%9C%E0%A4%AF-%E0%A4%97%E0%A4%BE%E0%A4%82%E0%A4%A7%E0%A5%80-%E0%A4%A8%E0%A4%BF%E0%A4%B0%E0%A4%BE%E0%A4%A7%E0%A4%BE%E0%A4%B0-%E0%A4%85%E0%A4%A8%E0%A5%81%E0%A4%A6%E0%A4%BE/', sourceLabel: 'Official Maharashtra department page',
+    note: 'The office checks your documents and category. This initial check is not an approval.'
+  },
+  {
+    id: 'lek-ladki', name: 'Lek Ladki Yojana', shortName: 'Lek Ladki', category: 'GIRL CHILD', categoryIcon: '✿', amount: 'Up to ₹1,01,000', amountHi: '₹1,01,000 पर्यंत', amountMr: '₹१,०१,००० पर्यंत',
+    summary: 'Financial support in stages for eligible girls from Maharashtra families with a yellow or orange ration card.', summaryHi: 'पिवळे किंवा केशरी रेशन कार्ड असलेल्या महाराष्ट्रातील पात्र कुटुंबांतील मुलींसाठी टप्प्याटप्प्याने आर्थिक मदत.', summaryMr: 'पिवळे किंवा केशरी रेशन कार्ड असलेल्या महाराष्ट्रातील पात्र कुटुंबांतील मुलींसाठी टप्प्याटप्प्याने आर्थिक मदत.',
+    rule: facts => facts.state === 'Maharashtra' && facts.hasGirlChild === true && facts.girlBornAfter2023 === true && facts.rationCardEligible === true,
+    checks: ['You said your family has a girl child born on or after 1 April 2023.', 'You said the household has a yellow or orange ration card.', 'You live in Maharashtra.'], checksHi: ['आपके परिवार में 1 अप्रैल 2023 या उसके बाद जन्मी बेटी है।', 'आपके पास पीला या नारंगी राशन कार्ड है।', 'आप महाराष्ट्र में रहते हैं।'], checksMr: ['आपल्या कुटुंबात १ एप्रिल २०२३ रोजी किंवा त्यानंतर जन्मलेली मुलगी आहे.', 'आपल्याकडे पिवळे किंवा केशरी रेशन कार्ड आहे.', 'आपण महाराष्ट्रात राहता.'],
+    docs: ['Girl child birth certificate', 'Yellow / orange ration card', 'Aadhaar cards (parent and child, if available)', 'Bank passbook', 'Residence proof'], docsHi: ['मुलीचा जन्म दाखला', 'पिवळे / केशरी रेशन कार्ड', 'आधार कार्ड (पालक आणि मुलगी, उपलब्ध असल्यास)', 'बँक पासबुक', 'रहिवासी पुरावा'], docsMr: ['मुलीचा जन्म दाखला', 'पिवळे / केशरी रेशन कार्ड', 'आधार कार्ड (पालक आणि मुलगी, उपलब्ध असल्यास)', 'बँक पासबुक', 'रहिवासी पुरावा'],
+    source: 'Maharashtra WCD / MahaDBT Citizen Charter', url: 'https://www.mahadbt.maharashtra.gov.in/CitizenCharterPDF/WCD_merged.pdf', detailUrl: 'https://zpwardha.maharashtra.gov.in/en/women-and-child-development-department/', sourceLabel: 'Official Maharashtra government charter',
+    note: 'The official department verifies the child’s date of birth, ration card, and other conditions.'
+  }
+];
