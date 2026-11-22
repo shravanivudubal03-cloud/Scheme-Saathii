@@ -2,7 +2,10 @@ import { schemes } from '../data/schemes.js';
 
 // Deterministic rules engine matcher.
 // The rules engine evaluates exact boolean predicates from data/schemes.js.
-// An LLM NEVER decides or guesses eligibility.
+// Follows MVP Engineering Contract:
+// - eligible: all required core predicates are satisfied by reviewed facts.
+// - needs-info: no known predicate has failed, but one or more required facts are unknown.
+// - not-eligible: at least one required predicate is explicitly false.
 export function matchSchemes(facts) {
   return schemes
     .filter(scheme => {
@@ -19,6 +22,10 @@ export function matchSchemes(facts) {
       return {
         ...scheme,
         status: 'ELIGIBLE',
+        resultState: 'eligible',
+        ruleVersion: scheme.ruleVersion || '2026.1',
+        lastVerified: scheme.lastVerified || '2026-11-20',
+        sourceOwner: scheme.sourceOwner || scheme.source,
         evaluation
       };
     });
