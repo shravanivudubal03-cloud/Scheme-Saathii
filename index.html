@@ -2,102 +2,558 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#f8f7f3" />
-  <meta name="description" content="Scheme Saathi helps you explore government benefits, understand eligibility and prepare the next step." />
-  <title>Scheme Saathi — Benefits, made easier</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#123b32" />
+  <meta name="description" content="Scheme Saathi — Citizen benefits copilot. Voice-enabled discovery of government schemes with deterministic rules, official citations, pre-filled applications, and CSC partner kits." />
+  <title>Scheme Saathi — Citizen Benefits Copilot (योजना साथी)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <a class="skip-link" href="#main" data-i18n="skip">Skip to content</a>
-  <header class="site-header">
-    <a class="brand" href="#discover" aria-label="Scheme Saathi home" data-view-link="discover">
-      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 5 34 13v14L20 35 6 27V13z"/><path d="M13 25c5-1 10-5 13-11M13 16c4 0 7 2 9 5M17 29c1-4 4-7 9-9"/></svg></span>
-      <span class="brand-name">scheme<span>saathi</span><small data-i18n="brandTag">YOUR BENEFITS, WITH YOU</small></span>
-    </a>
-    <nav class="main-nav" aria-label="Main navigation">
-      <button class="nav-link active" data-view="discover" data-i18n="navDiscover">Find schemes</button>
-      <button class="nav-link" data-view="explore" data-i18n="navExplore">Explore</button>
-      <button class="nav-link" data-view="saved"><span data-i18n="navSaved">Saved</span><span id="savedCount" class="nav-count">0</span></button>
-      <button class="nav-link" data-view="applications" data-i18n="navApplications">My preparation</button>
-    </nav>
-    <div class="header-tools">
-      <div class="language-switch" role="group" aria-label="Choose language">
-        <button data-lang="en" class="selected" aria-pressed="true">EN</button>
-        <button data-lang="mr" aria-pressed="false">मराठी</button>
-        <button data-lang="hi" aria-pressed="false">हिंदी</button>
-      </div>
-      <button id="textSizeBtn" class="icon-button" aria-label="Increase text size" title="Increase text size">Aa</button>
-    </div>
-  </header>
+  <div class="app-shell">
+    <!-- Top Navigation Header -->
+    <header class="top-nav-bar">
+      <div class="nav-container">
+        <a class="brand" href="#home" aria-label="Scheme Saathi home">
+          <span class="brand-mark">स</span>
+          <span class="brand-text">
+            scheme<span class="brand-light">saathi</span>
+            <small>CITIZEN BENEFITS COPILOT · योजना साथी</small>
+          </span>
+        </a>
 
-  <main id="main" class="page-wrap">
-    <section id="view-discover" class="view active-view" aria-labelledby="heroTitle">
-      <div class="hero-grid">
-        <div class="hero-copy">
-          <div class="eyebrow"><span class="eyebrow-dot"></span><span data-i18n="pilotLabel">MAHARASHTRA PILOT · 6 VERIFIED SCHEMES</span></div>
-          <h1 id="heroTitle" data-i18n="heroTitle">The support you’re looking for<br /><em>could be closer than you think.</em></h1>
-          <p class="hero-subtitle" data-i18n="heroSubtitle">Tell us a little about your life. We’ll help you find schemes, understand the rules and prepare your next step.</p>
-          <div class="hero-points">
-            <span><b>✓</b><span data-i18n="heroPoint1">Rules checked, never guessed</span></span>
-            <span><b>↗</b><span data-i18n="heroPoint2">Every scheme links to its official source</span></span>
+        <nav class="main-nav" aria-label="Main Navigation">
+          <button class="nav-item active" data-view="discover">
+            <span class="nav-icon">⌕</span>
+            <span data-copy="navDiscover">Find schemes</span>
+          </button>
+          <button class="nav-item" data-view="saved">
+            <span class="nav-icon">♡</span>
+            <span data-copy="navSaved">Saved</span>
+            <span id="savedCount" class="nav-badge">0</span>
+          </button>
+          <button class="nav-item" data-view="applications">
+            <span class="nav-icon">▤</span>
+            <span data-copy="navApplications">My applications</span>
+          </button>
+          <button class="nav-item" data-view="subscriptions">
+            <span class="nav-icon">★</span>
+            <span data-copy="navSubscriptions">Plans & Pricing</span>
+            <span class="nav-badge-pill" id="currentPlanBadge">FREE</span>
+          </button>
+          <button class="nav-item" data-view="csc">
+            <span class="nav-icon">🏢</span>
+            <span data-copy="navCsc">CSC Partner</span>
+          </button>
+        </nav>
+
+        <div class="top-actions">
+          <!-- Role preview switcher -->
+          <div class="role-selector" title="Preview different user roles">
+            <span class="role-label" data-copy="roleLabel">Role:</span>
+            <select id="roleSwitcher" aria-label="Select role preview">
+              <option value="CITIZEN_FREE">Citizen (Free)</option>
+              <option value="FAMILY_SAATHI">Family Saathi (Pro)</option>
+              <option value="CSC_PARTNER">CSC / Seva Kendra</option>
+            </select>
+          </div>
+
+          <!-- Language Switcher -->
+          <div class="language-switch" aria-label="Choose language">
+            <button data-lang="mr" class="selected">मराठी</button>
+            <span></span>
+            <button data-lang="hi">हिंदी</button>
+            <span></span>
+            <button data-lang="en">EN</button>
+          </div>
+
+          <button id="guideBtn" class="help-btn" title="How it works" aria-label="Help & Guide">?</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-area">
+      <!-- VIEW 1: DISCOVER SCHEMES -->
+      <section id="view-discover" class="view active-view">
+        <div class="welcome-row">
+          <div>
+            <div class="eyebrow">
+              <span class="eyebrow-line"></span>
+              <span data-copy="eyebrow">A TRUSTED COPILOT FOR EVERY CITIZEN</span>
+            </div>
+            <h1 data-copy="headline">
+              Government schemes you qualify for,<br/>
+              <em>explained simply in your language.</em>
+            </h1>
+            <p class="subhead" data-copy="subhead">
+              Tell us your family situation in Hindi, Marathi, or English. Our deterministic rules engine checks official schemes, explains why you qualify, lists mandatory documents, and pre-fills your application.
+            </p>
+          </div>
+          <div class="hero-badges">
+            <div class="trust-badge">
+              <span class="badge-icon">⚖️</span>
+              <div>
+                <strong>Rules Engine Tested</strong>
+                <small>Zero LLM guesswork</small>
+              </div>
+            </div>
+            <div class="trust-badge">
+              <span class="badge-icon">🏛️</span>
+              <div>
+                <strong>Official Sources</strong>
+                <small>Govt portals cited</small>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="hero-illustration" aria-hidden="true">
-          <div class="sun-orbit"></div><div class="illustration-sun"></div><div class="hill hill-one"></div><div class="hill hill-two"></div>
-          <div class="home-shape"><div class="roof"></div><div class="house"><span class="window"></span><span class="door"></span></div></div>
-          <span class="floating-leaf leaf-a">✦</span><span class="floating-leaf leaf-b">✧</span><span class="illustration-caption">साथी · साथी</span>
+
+        <!-- Progress Tracker -->
+        <div class="progress-wrap">
+          <div class="progress-label">
+            <span id="stepLabel">STEP 1 OF 2 · YOUR STORY</span>
+            <span id="progressHint">Describe your family situation in plain words</span>
+          </div>
+          <div class="progress-track"><span id="progressBar" style="width: 35%;"></span></div>
+        </div>
+
+        <!-- Step 1 Intake Panel -->
+        <div id="intakePanel" class="intake-panel">
+          <div class="panel-heading">
+            <div>
+              <span class="section-kicker" data-copy="yourStory">DESCRIBE YOUR SITUATION</span>
+              <h2 data-copy="tellUs">Speak or write about your family</h2>
+              <p data-copy="plainWords">No official legal terms needed. Mention your occupation, land, ration card, family members, or income in your daily language.</p>
+            </div>
+            <div class="step-number">01 <span>/ 02</span></div>
+          </div>
+
+          <!-- Quick Try Sample Story Chips -->
+          <div class="sample-stories">
+            <span class="samples-title" data-copy="trySample">💡 Tap an example story to try:</span>
+            <div class="chips-row">
+              <button class="sample-chip" data-sample="farmer">🌾 <span data-copy="chipFarmer">Maharashtra Farmer with 2 acres</span></button>
+              <button class="sample-chip" data-sample="woman">🌸 <span data-copy="chipWoman">Woman with Orange card & daughter</span></button>
+              <button class="sample-chip" data-sample="senior">👴 <span data-copy="chipSenior">Senior citizen (68 yrs) without income</span></button>
+              <button class="sample-chip" data-sample="artisan">🔨 <span data-copy="chipArtisan">Carpenter / Artisan seeking toolkit</span></button>
+              <button class="sample-chip" data-sample="student">🎓 <span data-copy="chipStudent">College student seeking scholarship</span></button>
+            </div>
+          </div>
+
+          <div class="input-label-row">
+            <label for="story" data-copy="storyLabel">Your family situation (बोलून सांगा किंवा लिहा)</label>
+            <div class="voice-actions">
+              <button id="micBtn" class="mic-button" aria-label="Speak your answer">
+                <span class="mic-dot">●</span>
+                <span data-copy="speak">Speak in Marathi / Hindi</span>
+                <span class="mic-wave">🎙️</span>
+              </button>
+            </div>
+          </div>
+
+          <textarea id="story" rows="5" placeholder="उदाहरण: मी महाराष्ट्रातील शेतकरी आहे. माझे वय ४५ वर्षे असून माझ्या नावावर २ एकर शेतजमीन आहे. आमच्याकडे केशरी रेशन कार्ड असून एक मुलगी कॉलेजमध्ये शिकते आहे." aria-label="Describe your situation"></textarea>
+
+          <div class="speech-live-status hidden" id="speechStatus">
+            <span class="listening-pulse"></span>
+            <span id="speechText">Listening to your voice... Speaks in your natural dialect.</span>
+          </div>
+
+          <div class="privacy-hint">
+            <span>🛡️</span>
+            <span data-copy="privacyHint">Your facts are evaluated by a fixed deterministic rules engine. Please do not enter sensitive Aadhaar or bank PIN numbers here.</span>
+          </div>
+
+          <!-- Quick Assist Filters -->
+          <div class="quick-fields">
+            <div class="quick-field">
+              <label for="state" data-copy="stateLabel">State of residence (राज्य)</label>
+              <select id="state">
+                <option value="Maharashtra" selected>Maharashtra (महाराष्ट्र)</option>
+                <option value="Other">Other States (अन्य राज्ये)</option>
+              </select>
+            </div>
+            <div class="quick-field">
+              <label for="familyType" data-copy="familyLabel">Primary occupation / Category (वर्गवारी)</label>
+              <select id="familyType">
+                <option value="">Select category (Optional)</option>
+                <option value="farmer">Farmer / शेतकरी</option>
+                <option value="woman">Woman / महिला</option>
+                <option value="senior">Senior Citizen (60+) / ज्येष्ठ नागरिक</option>
+                <option value="disability">Divyang / निराधार / दिव्यांग</option>
+                <option value="artisan">Artisan / पारंपरिक कारागीर (सुतार, लोहार)</option>
+                <option value="vendor">Street Vendor / फेरीवाला</option>
+                <option value="student">Student / विद्यार्थी</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="panel-footer">
+            <div class="secure-label">
+              <span>✓</span>
+              <span data-copy="rulesFirst">Eligibility verified by official scheme predicates</span>
+            </div>
+            <button id="checkBtn" class="primary-button">
+              <span data-copy="checkSchemes">Find Matching Schemes</span>
+              <span class="arrow-icon">→</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2 Fact Review & Results Container -->
+        <div id="results" class="results-section hidden"></div>
+
+        <!-- Trust footer -->
+        <div class="trust-row">
+          <div><span class="trust-icon">✓</span><span data-copy="trustRules">Rules-engine precision: Zero LLM hallucinations on eligibility</span></div>
+          <span class="trust-dot">·</span>
+          <div><span class="trust-icon">🏛️</span><span data-copy="trustSources">100% verified links to official Ministry & MahaDBT portals</span></div>
+          <span class="trust-dot">·</span>
+          <div><span class="trust-icon">🔒</span><span data-copy="trustPrivacy">Data privacy: Processed securely on this device</span></div>
+        </div>
+      </section>
+
+      <!-- VIEW 2: SAVED SCHEMES -->
+      <section id="view-saved" class="view">
+        <div class="view-header">
+          <div>
+            <div class="eyebrow"><span class="eyebrow-line"></span><span>YOUR SAVED SHORTLIST</span></div>
+            <h1 data-copy="savedTitle">Saved Schemes</h1>
+            <p class="subhead" data-copy="savedSub">Keep track of schemes you and your family plan to apply for.</p>
+          </div>
+        </div>
+        <div id="savedList" class="saved-list"></div>
+      </section>
+
+      <!-- VIEW 3: APPLICATIONS & DRAFTS -->
+      <section id="view-applications" class="view">
+        <div class="view-header">
+          <div>
+            <div class="eyebrow"><span class="eyebrow-line"></span><span>APPLICATION COMPANION</span></div>
+            <h1 data-copy="appsTitle">My Application Drafts & Checklists</h1>
+            <p class="subhead" data-copy="appsSub">Prepare documents, fill official application forms, and track your submission steps.</p>
+          </div>
+        </div>
+        <div id="applicationList" class="application-list"></div>
+      </section>
+
+      <!-- VIEW 4: SUBSCRIPTIONS & PRICING -->
+      <section id="view-subscriptions" class="view">
+        <div class="subscription-hero">
+          <div class="eyebrow"><span class="eyebrow-line"></span><span data-copy="pricingEyebrow">TRANSPARENT & CIVIC-MINDED PRICING</span></div>
+          <h1 data-copy="pricingTitle">Plans for Citizens, Families & CSC Centers</h1>
+          <p class="subhead" data-copy="pricingSub">
+            Citizen discovery is 100% free forever. Upgrade for multi-family portfolios, official pre-filled application forms, WhatsApp deadline alerts, or CSC Center bulk processing.
+          </p>
+
+          <!-- Billing Toggle -->
+          <div class="billing-toggle-wrap">
+            <span class="toggle-label" data-copy="monthly">Monthly</span>
+            <label class="switch">
+              <input type="checkbox" id="billingPeriodToggle" />
+              <span class="slider round"></span>
+            </label>
+            <span class="toggle-label" data-copy="yearly">Yearly <em class="discount-badge">Save up to 40%</em></span>
+          </div>
+        </div>
+
+        <!-- Pricing Cards Grid -->
+        <div class="pricing-grid" id="pricingCardsContainer"></div>
+
+        <!-- Value Proposition Highlights -->
+        <div class="pricing-faq">
+          <h2 data-copy="whyPricingTitle">Why our subscription model works for India</h2>
+          <div class="faq-grid">
+            <div class="faq-card">
+              <div class="faq-icon">🤝</div>
+              <h3 data-copy="faqFreeTitle">Why is citizen search 100% free?</h3>
+              <p data-copy="faqFreeDesc">Every Indian citizen has a constitutional right to know what government welfare they are entitled to. We will never paywall basic eligibility checks or official documents lists.</p>
+            </div>
+            <div class="faq-card">
+              <div class="faq-icon">👨‍👩‍👧‍👦</div>
+              <h3 data-copy="faqFamilyTitle">What is Family Saathi (₹49/mo)?</h3>
+              <p data-copy="faqFamilyDesc">For less than the price of a cup of tea, your whole family gets automatic WhatsApp alerts for scheme renewal deadlines (e-KYC, Ladki Bahin installments) and 1-click printable pre-filled application forms.</p>
+            </div>
+            <div class="faq-card">
+              <div class="faq-icon">🏢</div>
+              <h3 data-copy="faqCscTitle">How does the CSC Partner Plan empower VLEs?</h3>
+              <p data-copy="faqCscDesc">5+ Lakh CSC and Setu Kendra operators use our fast rules engine to assess 50+ villagers a day without rejection risks, generating branded application forms with their center stamp and seal.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 5: CSC SEVA KENDRA PARTNER PORTAL -->
+      <section id="view-csc" class="view">
+        <div class="view-header">
+          <div>
+            <div class="eyebrow"><span class="eyebrow-line"></span><span>VLE & KENDRA SUITE</span></div>
+            <h1 data-copy="cscPortalTitle">Aaple Sarkar & CSC Operator Portal</h1>
+            <p class="subhead" data-copy="cscPortalSub">Tools for Village Level Entrepreneurs (VLEs), Setu Kendras, and Cyber Cafes to serve citizens faster.</p>
+          </div>
+          <div class="csc-badge-header">
+            <span class="csc-verified-tag">✓ VERIFIED CSC WORKSPACE</span>
+          </div>
+        </div>
+
+        <div class="csc-dashboard">
+          <!-- Center Profile Configuration -->
+          <div class="csc-profile-card">
+            <h3>🏢 Center Branding & Seal Settings</h3>
+            <p>This header and operator seal will be automatically embedded onto every printed citizen application form.</p>
+            <div class="csc-form-grid">
+              <div class="form-group">
+                <label>Center Name (केंद्राचे नाव)</label>
+                <input type="text" id="cscCenterName" value="Aaple Sarkar Seva Kendra (आपले सरकार सेवा केंद्र)" />
+              </div>
+              <div class="form-group">
+                <label>VLE / Kendra ID (सीएससी आयडी)</label>
+                <input type="text" id="cscVleId" value="VLE-MH-412001" />
+              </div>
+              <div class="form-group">
+                <label>Operator Name (चालकाचे नाव)</label>
+                <input type="text" id="cscOperatorName" value="Shravani Dubal" />
+              </div>
+              <div class="form-group">
+                <label>Contact Phone (मोबाईल नंबर)</label>
+                <input type="text" id="cscContactPhone" value="+91 98765 43210" />
+              </div>
+              <div class="form-group">
+                <label>Taluka & District (तालुका व जिल्हा)</label>
+                <input type="text" id="cscLocation" value="Haveli, Pune, Maharashtra" />
+              </div>
+            </div>
+            <button id="saveCscProfileBtn" class="secondary-button" style="margin-top: 14px;">Save Center Profile</button>
+          </div>
+
+          <!-- Fast Citizen Intake & Batch Queue -->
+          <div class="csc-stats-row">
+            <div class="stat-box">
+              <div class="stat-number" id="cscTotalProcessed">142</div>
+              <div class="stat-label">Villagers Assessed</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-number">₹8.4 Lakh</div>
+              <div class="stat-label">Estimated Benefits Unlocked</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-number">98.4%</div>
+              <div class="stat-label">Form First-Pass Approval Rate</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Page Footer -->
+      <footer class="page-footer">
+        <div>
+          <strong>Scheme Saathi (योजना साथी)</strong> · Digital Public Infrastructure Companion
+          <div class="footer-sub">Empowering crores of eligible Indian families to claim their rightful government welfare.</div>
+        </div>
+        <div class="footer-links">
+          <span>Official Data Sources: GoI & Govt of Maharashtra</span>
+          <span>© 2026 Scheme Saathi</span>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- MODAL: PRE-FILLED APPLICATION FORM (A4 PRINTABLE) -->
+  <dialog id="applicationFormModal" class="form-modal">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <span class="govt-emblem">🏛️</span>
+        <div>
+          <h2 id="modalSchemeName">Application Form (शासकीय अर्ज)</h2>
+          <span id="modalDeptName" class="modal-dept">Department of Social Justice & Welfare</span>
+        </div>
+      </div>
+      <div class="modal-top-actions">
+        <button id="printFormBtn" class="primary-button print-btn">🖨️ Print / Download PDF</button>
+        <button id="closeModalBtn" class="close-btn" aria-label="Close">✕</button>
+      </div>
+    </div>
+
+    <!-- Official Printable Form Content -->
+    <div id="printableFormContent" class="printable-form">
+      <div class="official-form-header">
+        <div class="csc-watermark" id="formCscHeader">
+          <strong id="formCscName">Aaple Sarkar Seva Kendra</strong>
+          <span id="formCscDetails">VLE ID: VLE-MH-412001 · Contact: +91 98765 43210</span>
+        </div>
+        <div class="form-title-block">
+          <div class="emblem-text">GOVERNMENT OF MAHARASHTRA / GOVT OF INDIA</div>
+          <h1 id="printSchemeTitle">SCHEME APPLICATION FORM</h1>
+          <div class="form-ref-id">Form Application Ref: <strong id="formAppId">MH-SS-2026-89412</strong></div>
+        </div>
+        <div class="qr-box">
+          <div class="qr-placeholder">
+            <span>📲</span>
+            <small>Verify Portal</small>
+          </div>
         </div>
       </div>
 
-      <div class="trust-strip">
-        <span class="trust-item"><span class="trust-icon green">✓</span><span data-i18n="trustRules">Eligibility checked by clear rules</span></span>
-        <span class="trust-divider"></span>
-        <span class="trust-item"><span class="trust-icon saffron">↗</span><span data-i18n="trustSources">Official sources on every scheme</span></span>
-        <span class="trust-divider"></span>
-        <span class="trust-item"><span class="trust-icon blue">◉</span><span data-i18n="trustPrivate">Your notes stay on this device</span></span>
+      <div class="form-section-title">१. वैयक्तिक व कौटुंबिक माहिती / APPLICANT PROFILE</div>
+      <table class="official-table">
+        <tr>
+          <td class="lbl">नाव (Full Name):</td>
+          <td id="formApplicantName" class="val">श्रीमती / श्री [Citizen Applicant]</td>
+          <td class="lbl">वय व जन्मदिनांक (Age / DOB):</td>
+          <td id="formApplicantAge" class="val">42 Years</td>
+        </tr>
+        <tr>
+          <td class="lbl">लिंग (Gender):</td>
+          <td id="formApplicantGender" class="val">Female (महिला)</td>
+          <td class="lbl">जात / प्रवर्ग (Category):</td>
+          <td id="formApplicantCategory" class="val">General / OBC / SC / ST</td>
+        </tr>
+        <tr>
+          <td class="lbl">पत्ता (Residence Address):</td>
+          <td id="formApplicantAddress" class="val" colspan="3">Village & Taluka Haveli, District Pune, Maharashtra</td>
+        </tr>
+      </table>
+
+      <div class="form-section-title">२. पात्रता पडताळणी तपशील / ELIGIBILITY DETERMINATION CRITERIA</div>
+      <table class="official-table">
+        <tr>
+          <td class="lbl">वार्षिक कौटुंबिक उत्पन्न (Annual Income):</td>
+          <td id="formApplicantIncome" class="val">₹ 1,20,000 /- (Under limit)</td>
+          <td class="lbl">रेशन कार्ड प्रकार व नंबर (Ration Card):</td>
+          <td id="formApplicantRation" class="val">Orange Ration Card (केशरी)</td>
+        </tr>
+        <tr>
+          <td class="lbl">शेतजमीन मालकी (Agricultural Land):</td>
+          <td id="formApplicantLand" class="val">2.0 Acres (7/12 Gat No. 142/B)</td>
+          <td class="lbl">आयकर / शासकीय नोकरी (Tax/Govt):</td>
+          <td class="val">नाही (Nil / Non-taxpayer)</td>
+        </tr>
+      </table>
+
+      <div class="form-section-title">३. थेट लाभ हस्तांतरण (DBT) बँक खाते तपशील / BANK ACCOUNT</div>
+      <table class="official-table">
+        <tr>
+          <td class="lbl">बँकेचे नाव (Bank Name):</td>
+          <td class="val">Bank of Maharashtra / State Bank of India</td>
+          <td class="lbl">खाते क्रमांक (Account No):</td>
+          <td class="val">XXXX XXXX 8291</td>
+        </tr>
+        <tr>
+          <td class="lbl">आयएफएससी कोड (IFSC Code):</td>
+          <td class="val">MAHB0000123</td>
+          <td class="lbl">आधार जोडणी स्थिती (Aadhaar Seeding):</td>
+          <td class="val">✓ Active Aadhaar DBT Linked</td>
+        </tr>
+      </table>
+
+      <div class="form-section-title">४. सोबत जोडलेली आवश्यक कागदपत्रे / MANDATORY DOCUMENT CHECKLIST</div>
+      <div id="formDocsChecklist" class="form-doc-checklist"></div>
+
+      <div class="form-section-title">५. स्वयंघोषणा पत्र व हमीपत्र / APPLICANT SELF-DECLARATION</div>
+      <div class="declaration-text">
+        मी याद्वारे घोषित करतो/करते की वरील अर्जात दिलेली सर्व माहिती माझ्या व्यक्तिगत माहितीनुसार व विश्वासाप्रमाणे खरी व बिनचूक आहे. या योजनेच्या सर्व अटी व शर्ती मला मान्य आहेत. माहिती खोटी किंवा चुकीची आढळल्यास योजनेचा लाभ रद्द करून कायदेशीर कारवाईस मी पात्र राहीन.
       </div>
 
-      <section class="copilot-card" aria-labelledby="storyHeading">
-        <div class="card-topline"><div class="assistant-mark" aria-hidden="true">✳</div><div class="copilot-heading"><span class="section-label" data-i18n="copilotLabel">YOUR SCHEME COPILOT</span><h2 id="storyHeading" data-i18n="storyTitle">What’s your situation?</h2></div><span class="step-pill"><span class="step-dot"></span><span data-i18n="stepOne">STEP 1 OF 2</span></span></div>
-        <p class="card-intro" data-i18n="storyIntro">Write or speak naturally. A few details about your household can help us check the rules.</p>
-        <label class="sr-only" for="story" data-i18n="storyLabel">Describe your situation</label>
-        <div class="story-input-wrap"><textarea id="story" rows="4" maxlength="6000" data-i18n-placeholder="storyPlaceholder" placeholder="For example: We live in Maharashtra. I farm our family land, and my wife is 42. We have two daughters and an orange ration card…"></textarea><button id="micBtn" class="voice-button" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3m-4 0h8"/></svg><span data-i18n="speak">Speak</span></button></div>
-        <div class="input-meta"><span class="privacy-copy"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2 17 5v5c0 4-3 6.5-7 8-4-1.5-7-4-7-8V5z"/><path d="m7 10 2 2 4-4"/></svg><span data-i18n="privacyStory">Your story is sent to Ollama for fact extraction. Never include Aadhaar or bank numbers.</span></span><span id="charCount">0 / 6,000</span></div>
-        <div class="example-row"><span data-i18n="tryExample">Try:</span><button class="example-chip" data-example="farmer" data-i18n="exampleFarmer">Farmer family</button><button class="example-chip" data-example="girl" data-i18n="exampleGirl">Daughter in school</button><button class="example-chip" data-example="senior" data-i18n="exampleSenior">Older parent</button></div>
-        <div id="ollamaNotice" class="inline-notice hidden" role="status"><span class="notice-icon">i</span><div><strong data-i18n="manualFallbackTitle">Let’s keep going</strong><p data-i18n="manualFallbackText">The language service isn’t connected right now. You can answer a few simple questions instead.</p></div><button id="openGuided" class="text-button" data-i18n="openQuestions">Answer questions →</button></div>
-        <div class="copilot-actions"><button id="openGuidedSecondary" class="secondary-button"><span data-i18n="guidedAlternative">I’d rather answer questions</span><span aria-hidden="true">↗</span></button><button id="checkBtn" class="primary-button"><span data-i18n="checkSchemes">Find my schemes</span><span class="button-arrow" aria-hidden="true">→</span></button></div>
-        <div id="loadingMessage" class="loading-message hidden" role="status"><span class="spinner"></span><span data-i18n="readingStory">Understanding your story…</span></div>
-      </section>
-
-      <section class="moments-section" aria-labelledby="momentsTitle"><div class="section-heading"><div><span class="section-label" data-i18n="browseLabel">EXPLORE A DIFFERENT WAY</span><h2 id="momentsTitle" data-i18n="momentsTitle">Start with what matters to you</h2></div><button class="text-button" data-go="explore"><span data-i18n="seeAll">See all schemes</span><span>→</span></button></div>
-        <div class="moment-grid">
-          <button class="moment-card" data-category="farming"><span class="moment-icon icon-farm">⌁</span><span><strong data-i18n="catFarming">Farming</strong><small data-i18n="catFarmingHint">Support for cultivators</small></span><span class="moment-arrow">→</span></button>
-          <button class="moment-card" data-category="family"><span class="moment-icon icon-family">✿</span><span><strong data-i18n="catFamily">Women & children</strong><small data-i18n="catFamilyHint">Help for every new chapter</small></span><span class="moment-arrow">→</span></button>
-          <button class="moment-card" data-category="support"><span class="moment-icon icon-support">♡</span><span><strong data-i18n="catSupport">Monthly support</strong><small data-i18n="catSupportHint">A little more certainty</small></span><span class="moment-arrow">→</span></button>
-          <button class="moment-card" data-category="senior"><span class="moment-icon icon-senior">◷</span><span><strong data-i18n="catSenior">For older adults</strong><small data-i18n="catSeniorHint">Support for later life</small></span><span class="moment-arrow">→</span></button>
-          <button class="moment-card" data-category="health"><span class="moment-icon icon-health">+</span><span><strong data-i18n="catHealth">Health cover</strong><small data-i18n="catHealthHint">Care for older family</small></span><span class="moment-arrow">→</span></button>
-          <button class="moment-card" data-category="energy"><span class="moment-icon icon-energy">♨</span><span><strong data-i18n="catEnergy">Clean cooking</strong><small data-i18n="catEnergyHint">A safer cooking option</small></span><span class="moment-arrow">→</span></button>
+      <div class="signature-row">
+        <div class="sig-box">
+          <div class="sig-line"></div>
+          <span>अर्जदाराची स्वाक्षरी / डाव्या हाताचा अंगठा<br/>(Applicant Signature / Thumb)</span>
         </div>
-      </section>
-      <div class="scope-note"><span>✳</span><p data-i18n="scopeNote">Scheme Saathi is a Maharashtra pilot. We currently cover a focused set of schemes; we’ll keep growing the verified catalogue.</p><button class="text-button" data-go="explore" data-i18n="browsePilot">Browse the pilot →</button></div>
-    </section>
+        <div class="sig-box">
+          <div class="sig-line"></div>
+          <span>सीएससी केंद्र चालक स्वाक्षरी व शिक्का<br/>(CSC VLE Seal & Dispatch Token)</span>
+        </div>
+      </div>
+    </div>
+  </dialog>
 
-    <section id="view-explore" class="view" aria-labelledby="exploreTitle"><div class="page-intro"><span class="section-label" data-i18n="exploreLabel">THE VERIFIED CATALOGUE</span><h1 id="exploreTitle" data-i18n="exploreTitle">Explore schemes</h1><p data-i18n="exploreSubtitle">Browse the Maharashtra pilot catalogue. Each scheme includes its source, conditions and documents to prepare.</p></div><div class="catalog-toolbar"><label class="search-box"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg><input id="schemeSearch" type="search" data-i18n-placeholder="searchPlaceholder" placeholder="Search schemes or support…"/><kbd>/</kbd></label><div id="categoryFilters" class="filter-row" role="group" aria-label="Filter by category"></div></div><div id="catalogGrid" class="catalog-grid"></div><p class="catalog-footnote" data-i18n="catalogNote">Information is a summary, not an application decision. Always check the department’s current instructions.</p></section>
+  <!-- MODAL: SUBSCRIPTION UPGRADE & UPI CHECKOUT -->
+  <dialog id="subscriptionModal" class="sub-modal">
+    <div class="modal-header">
+      <h2>Upgrade Plan · सदस्यता निवडा</h2>
+      <button id="closeSubModalBtn" class="close-btn">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="plan-summary-banner" id="checkoutPlanBanner">
+        <div class="plan-summary-details">
+          <strong id="checkoutPlanTitle">Family Saathi (कुटुंब साथी)</strong>
+          <span id="checkoutPlanDesc">Complete scheme security for up to 6 family members</span>
+        </div>
+        <div class="checkout-price">
+          <span class="currency">₹</span>
+          <span class="val" id="checkoutPriceVal">49</span>
+          <small id="checkoutPeriod">/ month</small>
+        </div>
+      </div>
 
-    <section id="view-results" class="view" aria-labelledby="resultsTitle"><div id="resultsContent"></div></section>
-    <section id="view-saved" class="view" aria-labelledby="savedTitle"><div class="page-intro"><span class="section-label" data-i18n="savedLabel">YOUR SHORTLIST</span><h1 id="savedTitle" data-i18n="savedTitle">Saved schemes</h1><p data-i18n="savedSubtitle">Keep the schemes that matter close at hand.</p></div><div id="savedGrid" class="catalog-grid"></div></section>
-    <section id="view-applications" class="view" aria-labelledby="applicationsTitle"><div class="page-intro"><span class="section-label" data-i18n="prepLabel">ONE STEP AT A TIME</span><h1 id="applicationsTitle" data-i18n="applicationsTitle">Your preparation</h1><p data-i18n="applicationsSubtitle">Collect documents, keep your notes and prepare a draft for your next visit.</p></div><div class="prep-banner"><span class="prep-banner-icon">▤</span><div><strong data-i18n="prepBannerTitle">Your information stays yours</strong><p data-i18n="prepBannerText">Drafts are stored only in this browser. Nothing is submitted to a government office.</p></div><button id="clearDrafts" class="text-button" data-i18n="clearDrafts">Clear drafts</button></div><div id="applicationList" class="application-list"></div></section>
+      <!-- Payment Method Simulator -->
+      <div class="payment-tabs">
+        <div class="upi-box">
+          <div class="upi-header">
+            <span>📲 Instant UPI Payment (Scan & Pay)</span>
+            <div class="upi-apps">
+              <span class="app-chip">GPay</span>
+              <span class="app-chip">PhonePe</span>
+              <span class="app-chip">Paytm</span>
+              <span class="app-chip">BHIM</span>
+            </div>
+          </div>
+          <div class="qr-container">
+            <div class="simulated-qr">
+              <div class="qr-pattern">
+                <div class="qr-corner top-left"></div>
+                <div class="qr-corner top-right"></div>
+                <div class="qr-corner bottom-left"></div>
+                <div class="qr-center">₹49</div>
+              </div>
+            </div>
+            <div class="qr-instructions">
+              <strong>Scan with any UPI App</strong>
+              <p>UPI ID: <code>schemesaathi@upi</code></p>
+              <small>Simulated instant activation for testing</small>
+            </div>
+          </div>
+          <button id="confirmPaymentBtn" class="primary-button full-width">
+            <span>✓ Complete Payment & Activate Plan</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </dialog>
 
-    <footer class="site-footer"><span>© 2026 Scheme Saathi</span><span data-i18n="footerDisclaimer">A citizen guide, not a government office. Final eligibility is decided by the department.</span><button id="guideBtn" class="footer-link" data-i18n="howItWorks">How it works</button></footer>
-  </main>
-
-  <dialog id="guidedDialog" class="guided-dialog"><form id="guidedForm" method="dialog"><div class="dialog-top"><div><span class="section-label" data-i18n="guidedEyebrow">A FEW SIMPLE QUESTIONS</span><h2 data-i18n="guidedTitle">Let’s build your profile</h2><p data-i18n="guidedSubtitle">Answer what you can. Skip anything you don’t know.</p></div><button id="closeGuided" type="button" class="dialog-close" aria-label="Close">×</button></div><div class="guided-fields" id="guidedFields"></div><div class="dialog-footer"><span class="privacy-copy"><span class="trust-icon blue">◉</span><span data-i18n="localOnly">Saved in this browser only</span></span><button class="primary-button" value="default" data-i18n="reviewAnswers">Review my answers →</button></div></form></dialog>
-  <dialog id="guideDialog" class="guide-dialog"><button class="dialog-close" id="closeGuide" aria-label="Close">×</button><div class="assistant-mark">✳</div><span class="section-label" data-i18n="guideLabel">HOW SCHEME SAATHI WORKS</span><h2 data-i18n="guideTitle">A clear path, one step at a time.</h2><div class="guide-steps"><article><b>01</b><strong data-i18n="guideStep1">Tell us about your life</strong><p data-i18n="guideStep1Body">Write, speak, or answer a few simple questions. You decide what to share.</p></article><article><b>02</b><strong data-i18n="guideStep2">Check your details</strong><p data-i18n="guideStep2Body">The language model extracts possible facts. You review and correct them before anything is matched.</p></article><article><b>03</b><strong data-i18n="guideStep3">Prepare your next step</strong><p data-i18n="guideStep3Body">A fixed rules engine checks scheme conditions. Save a scheme and print a preparation draft when ready.</p></article></div><p class="dialog-note" data-i18n="guideNote">This is a small, verified pilot. It gives guidance, not a government approval.</p></dialog>
+  <!-- Toast notification banner -->
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- HOW IT WORKS GUIDE DIALOG -->
+  <dialog id="guideDialog" class="guide-dialog">
+    <button class="dialog-close" id="closeGuide" aria-label="Close">×</button>
+    <div class="section-kicker">HOW SCHEME SAATHI WORKS · कार्यपद्धती</div>
+    <h2>A trusted, deterministic path to your government entitlements</h2>
+    <div class="guide-steps">
+      <div>
+        <b>01</b>
+        <strong>Tell your situation in your own words</strong>
+        <p>Speak or type in Marathi, Hindi, or English. You can also tap our rural scenario examples.</p>
+      </div>
+      <div>
+        <b>02</b>
+        <strong>Deterministic rules engine verification</strong>
+        <p>Unlike conversational bots that guess eligibility, our engine evaluates exact boolean criteria published by the Government of India and Maharashtra.</p>
+      </div>
+      <div>
+        <b>03</b>
+        <strong>Official explanation & citations</strong>
+        <p>Listen or read why you qualify, view mandatory documents, and follow direct links to official ministry portals.</p>
+      </div>
+      <div>
+        <b>04</b>
+        <strong>Pre-filled official application forms</strong>
+        <p>Generate a complete, official-format application form ready to print and carry to the Gram Panchayat or CSC center.</p>
+      </div>
+    </div>
+    <p class="dialog-note">Scheme Saathi is a civic-tech copilot. Final entitlement approval is made by the competent government department upon document verification.</p>
+  </dialog>
+
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>

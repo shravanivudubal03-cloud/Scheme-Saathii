@@ -1,289 +1,1075 @@
 import { schemes } from '../data/schemes.js';
-import { evaluateCatalog, evaluateScheme, factFields, matchSchemes } from './eligibility.js';
+import { matchSchemes, extractFacts, generateCitizenExplanation } from './eligibility.js';
+import {
+  SUBSCRIPTION_PLANS,
+  getCurrentPlan,
+  setCurrentPlan,
+  canAccessFeature,
+  getCscProfile,
+  saveCscProfile
+} from './subscriptions.js';
 
-const words = {
-  en:{tellMore:'Tell us a little about your situation first.',brandTag:'YOUR BENEFITS, WITH YOU',skip:'Skip to content',navDiscover:'Find schemes',navExplore:'Explore',navSaved:'Saved',navApplications:'My preparation',pilotLabel:'MAHARASHTRA PILOT · 6 VERIFIED SCHEMES',heroTitle:'The support you’re looking for<br /><em>could be closer than you think.</em>',heroSubtitle:'Tell us a little about your life. We’ll help you find schemes, understand the rules and prepare your next step.',heroPoint1:'Rules checked, never guessed',heroPoint2:'Every scheme links to its official source',trustRules:'Eligibility checked by clear rules',trustSources:'Official sources on every scheme',trustPrivate:'Your notes stay on this device',copilotLabel:'YOUR SCHEME COPILOT',storyTitle:'What’s your situation?',stepOne:'STEP 1 OF 2',storyIntro:'Write or speak naturally. A few details about your household can help us check the rules.',storyLabel:'Describe your situation',storyPlaceholder:'For example: We live in Maharashtra. I farm our family land, and my wife is 42. We have two daughters and an orange ration card…',speak:'Speak',privacyStory:'Your story is sent to Ollama for fact extraction. Never include Aadhaar or bank numbers.',tryExample:'Try:',exampleFarmer:'Farmer family',exampleGirl:'Daughter in school',exampleSenior:'Older parent',manualFallbackTitle:'Let’s keep going',manualFallbackText:'The language service isn’t connected right now. You can answer a few simple questions instead.',openQuestions:'Answer questions →',guidedAlternative:'I’d rather answer questions',checkSchemes:'Find my schemes',readingStory:'Understanding your story…',browseLabel:'EXPLORE A DIFFERENT WAY',momentsTitle:'Start with what matters to you',seeAll:'See all schemes',catFarming:'Farming',catFarmingHint:'Support for cultivators',catFamily:'Women & children',catFamilyHint:'Help for every new chapter',catSupport:'Monthly support',catSupportHint:'A little more certainty',catSenior:'For older adults',catSeniorHint:'Support for later life',catHealth:'Health cover',catHealthHint:'Care for older family',catEnergy:'Clean cooking',catEnergyHint:'A safer cooking option',scopeNote:'Scheme Saathi is a Maharashtra pilot. We currently cover a focused set of schemes; we’ll keep growing the verified catalogue.',browsePilot:'Browse the pilot →',exploreLabel:'THE VERIFIED CATALOGUE',exploreTitle:'Explore schemes',exploreSubtitle:'Browse the Maharashtra pilot catalogue. Each scheme includes its source, conditions and documents to prepare.',searchPlaceholder:'Search schemes or support…',filterAll:'All schemes',filterFarming:'Farming',filterFamily:'Women & children',filterSupport:'Monthly support',filterSenior:'Older adults',filterHealth:'Health cover',filterEnergy:'Clean cooking',catalogNote:'Information is a summary, not an application decision. Always check the department’s current instructions.',savedLabel:'YOUR SHORTLIST',savedTitle:'Saved schemes',savedSubtitle:'Keep the schemes that matter close at hand.',prepLabel:'ONE STEP AT A TIME',applicationsTitle:'Your preparation',applicationsSubtitle:'Collect documents, keep your notes and prepare a draft for your next visit.',prepBannerTitle:'Your information stays yours',prepBannerText:'Drafts are stored only in this browser. Nothing is submitted to a government office.',clearDrafts:'Clear drafts',footerDisclaimer:'A citizen guide, not a government office. Final eligibility is decided by the department.',howItWorks:'How it works',guidedEyebrow:'A FEW SIMPLE QUESTIONS',guidedTitle:'Let’s build your profile',guidedSubtitle:'Answer what you can. Skip anything you don’t know.',localOnly:'Saved in this browser only',reviewAnswers:'Review my answers →',guideLabel:'HOW SCHEME SAATHI WORKS',guideTitle:'A clear path, one step at a time.',guideStep1:'Tell us about your life',guideStep1Body:'Write, speak, or answer a few simple questions. You decide what to share.',guideStep2:'Check your details',guideStep2Body:'The language model extracts possible facts. You review and correct them before anything is matched.',guideStep3:'Prepare your next step',guideStep3Body:'A fixed rules engine checks scheme conditions. Save a scheme and print a preparation draft when ready.',guideNote:'This is a small, verified pilot. It gives guidance, not a government approval.',reviewLabel:'STEP 2 OF 2 · CHECK YOUR DETAILS',reviewTitle:'Does this look right?',reviewSubtitle:'We pulled out these details from what you said. Correct anything, and leave unknowns blank.',editStory:'Edit my story',applyRules:'Check scheme rules',eligibleHeading:'A possible match',needHeading:'Could fit — a little more to check',notConfirmed:'No confirmed match yet',noCandidates:'We couldn’t find a scheme match with these details.',noCandidatesHelp:'You can change your answers or explore the full pilot catalogue below.',missingPrefix:'To check this scheme, tell us:',matchesCount:'possible scheme matches',shownResults:'Showing schemes that fit your answers or need one more detail.',statusEligible:'CORE CONDITIONS MATCH',statusNeeds:'NEEDS DETAILS',statusNot:'DOES NOT MATCH',whyFits:'Why it may fit',needsInfo:'Still to confirm',documents:'Documents to gather',officialSource:'Official source',saveScheme:'Save',savedScheme:'Saved',prepare:'Prepare application',readResults:'Read aloud',printResults:'Print summary',detailsUpdated:'Answers updated',savedToast:'Saved to your shortlist',removedToast:'Removed from saved schemes',draftCreated:'Preparation draft created',emptySaved:'Your shortlist is empty',emptySavedText:'Save a scheme from the catalogue or your results to keep it here.',emptyApplications:'No preparation drafts yet',emptyApplicationsText:'Choose “Prepare application” on a scheme to start a local checklist and draft.',exploreSchemes:'Explore schemes',checkAgain:'Check my details',sourceUpdated:'Source reviewed',notSubmit:'This draft does not submit an application.',draftTitle:'Application preparation',draftStatus:'Local preparation draft',draftFormTitle:'Application details',applicantName:'Applicant name',district:'District',village:'Village / town',ageYears:'Age',incomeRupees:'Annual household income (₹)',schemeInterest:'Scheme',documentsDone:'Documents checklist',notesLabel:'Notes for your visit',notesPlaceholder:'Questions, office details, or next steps…',printDraft:'Print draft',deleteDraft:'Delete',progressLabel:'documents ready',progressOf:'of',confirmDeleteDraft:'Delete this local draft?',confirmClearDrafts:'Clear all local drafts?',draftDeleted:'Draft deleted',draftsCleared:'Drafts cleared',textSize:'Larger text',voiceUnavailable:'Voice input is not available in this browser.',voiceListening:'Listening… tap to stop',voiceAdded:'Voice input added',nothingToRead:'There are no scheme results to read yet.',factState:'State of residence',factAge:'Age of the person being checked',factFarmer:'Your family farms',factLand:'Agricultural land in family ownership',factIncome:'Annual household income (₹)',factBpl:'Household listed as BPL',factSupport:'Need support due to a qualifying condition',factGirl:'Girl child in the family',factGirlDate:'Girl born on or after 1 April 2023',factRation:'Yellow or orange ration card',factTax:'Any family member paid income tax',factGov:'Any family member is a government employee',factExclusion:'Any other PM-KISAN exclusion applies',factApplicantWoman:'Person applying is a woman',factLpg:'Someone in the household has an LPG connection',factPoorHousehold:'Household meets PMUY poor-household conditions',notSure:'Not sure',yes:'Yes',no:'No',maharashtra:'Maharashtra',otherState:'Another state',agePrompt:'Choose age range',incomePath:'BPL or annual income up to ₹21,000',girlIncome:'Annual household income up to ₹1,00,000',stateHint:'This catalogue currently covers Maharashtra only.',factsSaved:'Details ready to review',ruleCta:'Confirm details to see matches',filterResults:'Search and filters',noSearchResults:'No schemes found',noSearchHelp:'Try another word or choose a different category.',catalogueKicker:'VERIFIED SCHEMES',printDisclaimer:'This is a preparation summary, not an official application.',downloadJson:'Download my details',clearNotice:'This clears only locally stored drafts.',exampleFarmerText:'We live in Maharashtra. Our family farms and owns agricultural land. Nobody in my family pays income tax or works as a government employee.',exampleGirlText:'We live in Maharashtra. My daughter was born in May 2023. We have an orange ration card and our annual household income is ₹80,000.',exampleSeniorText:'My father is 68, lives in Maharashtra, and our household is on the BPL list.'},
-  mr:{tellMore:'आधी तुमच्या परिस्थितीबद्दल थोडे सांगा.',brandTag:'तुमच्या लाभांसाठी तुमचा साथी',skip:'मुख्य मजकुराकडे जा',navDiscover:'योजना शोधा',navExplore:'योजना पाहा',navSaved:'जतन केलेल्या',navApplications:'माझी तयारी',pilotLabel:'महाराष्ट्र पायलट · ६ पडताळलेल्या योजना',heroTitle:'तुम्ही शोधत असलेली मदत<br /><em>तुमच्या जवळ असू शकते.</em>',heroSubtitle:'तुमच्या परिस्थितीबद्दल थोडे सांगा. योजना शोधणे, नियम समजून घेणे आणि पुढचे पाऊल तयार करणे यात आम्ही मदत करू.',heroPoint1:'नियमांनुसार तपासणी, अंदाज नाही',heroPoint2:'प्रत्येक योजनेसाठी अधिकृत स्रोत',trustRules:'पात्रतेची स्पष्ट नियमांनुसार तपासणी',trustSources:'प्रत्येक योजनेसाठी अधिकृत स्रोत',trustPrivate:'तुमच्या नोंदी या उपकरणातच राहतात',copilotLabel:'तुमचा योजना साथी',storyTitle:'तुमची परिस्थिती काय आहे?',stepOne:'टप्पा १ पैकी २',storyIntro:'तुमच्या भाषेत लिहा किंवा बोला. कुटुंबाबद्दलची थोडी माहिती नियम तपासण्यास मदत करू शकते.',storyLabel:'तुमच्या परिस्थितीबद्दल सांगा',storyPlaceholder:'उदाहरण: आम्ही महाराष्ट्रात राहतो. आमची शेतीची जमीन आहे. माझे वय ४२ आहे, दोन मुली आहेत आणि आमच्याकडे केशरी रेशन कार्ड आहे…',speak:'बोला',privacyStory:'माहिती काढण्यासाठी तुमची माहिती Ollama कडे पाठवली जाते. आधार किंवा बँक क्रमांक लिहू नका.',tryExample:'उदाहरणे:',exampleFarmer:'शेतकरी कुटुंब',exampleGirl:'शाळेत जाणारी मुलगी',exampleSenior:'वृद्ध पालक',manualFallbackTitle:'पुढे सुरू ठेवूया',manualFallbackText:'भाषा सेवा सध्या जोडलेली नाही. त्याऐवजी काही सोप्या प्रश्नांची उत्तरे द्या.',openQuestions:'प्रश्नांची उत्तरे द्या →',guidedAlternative:'मला प्रश्नांची उत्तरे द्यायची आहेत',checkSchemes:'माझ्या योजना शोधा',readingStory:'तुमची माहिती समजून घेत आहोत…',browseLabel:'दुसऱ्या पद्धतीने शोधा',momentsTitle:'तुमच्यासाठी महत्त्वाच्या गोष्टीपासून सुरू करा',seeAll:'सर्व योजना पाहा',catFarming:'शेती',catFarmingHint:'शेतकरी कुटुंबांसाठी सहाय्य',catFamily:'महिला व मुले',catFamilyHint:'नव्या टप्प्यासाठी मदत',catSupport:'मासिक सहाय्य',catSupportHint:'थोडी अधिक स्थिरता',catSenior:'ज्येष्ठ नागरिक',catSeniorHint:'वृद्धापकाळातील सहाय्य',catHealth:'आरोग्य संरक्षण',catHealthHint:'ज्येष्ठ कुटुंबीयांसाठी',catEnergy:'स्वच्छ स्वयंपाक',catEnergyHint:'सुरक्षित इंधन पर्याय',scopeNote:'योजना साथी हा महाराष्ट्र पायलट आहे. सध्या काही निवडक योजना समाविष्ट आहेत; पडताळलेला संग्रह वाढवत राहू.',browsePilot:'पायलटमधील योजना पाहा →',exploreLabel:'पडताळलेला योजना संग्रह',exploreTitle:'योजना शोधा',exploreSubtitle:'महाराष्ट्र पायलटमधील योजना पाहा. प्रत्येक योजनेसोबत स्रोत, अटी आणि कागदपत्रांची माहिती आहे.',searchPlaceholder:'योजना किंवा सहाय्य शोधा…',filterAll:'सर्व योजना',filterFarming:'शेती',filterFamily:'महिला व मुले',filterSupport:'मासिक सहाय्य',filterSenior:'ज्येष्ठ नागरिक',filterHealth:'आरोग्य संरक्षण',filterEnergy:'स्वच्छ स्वयंपाक',catalogNote:'ही माहिती सारांश आहे, अर्जाचा निर्णय नाही. विभागाच्या सध्याच्या सूचना तपासा.',savedLabel:'तुमची यादी',savedTitle:'जतन केलेल्या योजना',savedSubtitle:'महत्त्वाच्या योजना जवळ ठेवा.',prepLabel:'एकावेळी एक पाऊल',applicationsTitle:'तुमची तयारी',applicationsSubtitle:'कागदपत्रे जमा करा, नोंदी ठेवा आणि पुढच्या भेटीसाठी मसुदा तयार करा.',prepBannerTitle:'तुमची माहिती तुमच्याचकडे',prepBannerText:'मसुदे फक्त या ब्राउझरमध्ये साठवले जातात. कोणताही अर्ज सरकारी कार्यालयात पाठवला जात नाही.',clearDrafts:'मसुदे पुसा',footerDisclaimer:'नागरिकांसाठी मार्गदर्शन, सरकारी कार्यालय नाही. अंतिम पात्रता विभाग ठरवतो.',howItWorks:'कसे कार्य करते',guidedEyebrow:'काही सोपे प्रश्न',guidedTitle:'तुमची माहिती भरूया',guidedSubtitle:'जितके माहीत आहे ते सांगा. माहीत नसलेले सोडा.',localOnly:'फक्त या ब्राउझरमध्ये जतन',reviewAnswers:'माझी उत्तरे तपासा →',guideLabel:'योजना साथी कसे काम करते',guideTitle:'एकावेळी एक स्पष्ट पाऊल.',guideStep1:'तुमच्या परिस्थितीबद्दल सांगा',guideStep1Body:'लिहा, बोला किंवा काही सोप्या प्रश्नांची उत्तरे द्या. काय सांगायचे ते तुम्ही ठरवा.',guideStep2:'तुमची माहिती तपासा',guideStep2Body:'भाषा मॉडेल संभाव्य माहिती काढते. जुळवणीपूर्वी तुम्ही ती तपासून दुरुस्त करता.',guideStep3:'पुढचे पाऊल तयार करा',guideStep3Body:'निश्चित नियम इंजिन योजनेच्या अटी तपासते. योजना जतन करा आणि तयारीचा मसुदा छापा.',guideNote:'हा लहान पडताळलेला पायलट आहे. ही माहिती आहे, सरकारी मंजुरी नाही.',reviewLabel:'टप्पा २ पैकी २ · तुमची माहिती तपासा',reviewTitle:'ही माहिती बरोबर आहे का?',reviewSubtitle:'तुमच्या सांगितलेल्या माहितीमधून हे तपशील घेतले आहेत. दुरुस्त करा किंवा माहीत नसलेले रिकामे ठेवा.',editStory:'माहिती बदला',applyRules:'योजनेचे नियम तपासा',eligibleHeading:'संभाव्य जुळवणी',needHeading:'पात्र असू शकते — आणखी थोडी माहिती हवी',notConfirmed:'अजून जुळवणी निश्चित नाही',noCandidates:'या तपशीलांवर कोणतीही योजना निश्चित झाली नाही.',noCandidatesHelp:'उत्तरे बदलून पुन्हा पाहा किंवा पायलटमधील सर्व योजना शोधा.',missingPrefix:'ही योजना तपासण्यासाठी माहिती द्या:',matchesCount:'संभाव्य योजना',shownResults:'तुमच्या उत्तरांशी जुळणाऱ्या किंवा एका तपशीलाची गरज असलेल्या योजना.',statusEligible:'मुख्य अटी जुळल्या',statusNeeds:'माहिती हवी',statusNot:'जुळत नाही',whyFits:'का लागू होऊ शकते',needsInfo:'तपासायचे तपशील',documents:'जमवायची कागदपत्रे',officialSource:'अधिकृत स्रोत',saveScheme:'जतन करा',savedScheme:'जतन',prepare:'अर्जाची तयारी',readResults:'ऐकून घ्या',printResults:'सारांश छापा',detailsUpdated:'उत्तरे अद्ययावत झाली',savedToast:'योजना जतन केली',removedToast:'जतन केलेल्या यादीतून काढली',draftCreated:'तयारीचा मसुदा तयार',emptySaved:'तुमची जतन यादी रिकामी आहे',emptySavedText:'योजना जतन करून येथे ठेवा.',emptyApplications:'अजून तयारीचा मसुदा नाही',emptyApplicationsText:'योजनेवरील “अर्जाची तयारी” निवडून कागदपत्रांची यादी आणि मसुदा सुरू करा.',exploreSchemes:'योजना शोधा',checkAgain:'माहिती तपासा',sourceUpdated:'स्रोत तपासला',notSubmit:'या मसुद्याने अर्ज जमा होत नाही.',draftTitle:'अर्ज तयारी',draftStatus:'स्थानिक तयारीचा मसुदा',draftFormTitle:'अर्जाचे तपशील',applicantName:'अर्जदाराचे नाव',district:'जिल्हा',village:'गाव / शहर',ageYears:'वय',incomeRupees:'कुटुंबाचे वार्षिक उत्पन्न (₹)',schemeInterest:'योजना',documentsDone:'कागदपत्रांची यादी',notesLabel:'भेटीसाठी नोंदी',notesPlaceholder:'प्रश्न, कार्यालयाचा पत्ता किंवा पुढची पावले…',printDraft:'मसुदा छापा',deleteDraft:'पुसा',progressLabel:'कागदपत्रे तयार',progressOf:'पैकी',confirmDeleteDraft:'हा स्थानिक मसुदा पुसायचा?',confirmClearDrafts:'सर्व स्थानिक मसुदे पुसायचे?',draftDeleted:'मसुदा पुसला',draftsCleared:'मसुदे पुसले',textSize:'मोठा मजकूर',voiceUnavailable:'या ब्राउझरमध्ये आवाजाने माहिती देण्याची सुविधा नाही.',voiceListening:'ऐकत आहे… थांबवण्यासाठी पुन्हा दाबा',voiceAdded:'आवाजातील माहिती जोडली',nothingToRead:'वाचण्यासाठी योजना निकाल नाहीत.',factState:'राहण्याचे राज्य',factAge:'तपासत असलेल्या व्यक्तीचे वय',factFarmer:'तुमचे कुटुंब शेती करते',factLand:'शेतीची जमीन कुटुंबाच्या मालकीची',factIncome:'कुटुंबाचे वार्षिक उत्पन्न (₹)',factBpl:'कुटुंबाचे नाव BPL यादीत आहे',factSupport:'पात्र कारणामुळे सहाय्याची गरज',factGirl:'कुटुंबात मुलगी आहे',factGirlDate:'मुलीचा जन्म १ एप्रिल २०२३ रोजी किंवा नंतर',factRation:'पिवळे किंवा केशरी रेशन कार्ड',factTax:'कुटुंबातील कोणी आयकर भरला',factGov:'कुटुंबातील कोणी सरकारी कर्मचारी आहे',factExclusion:'PM-KISAN ची इतर अपात्रता लागू आहे',factApplicantWoman:'अर्ज करणारी व्यक्ती महिला आहे',factLpg:'कुटुंबात कोणाच्या नावावर LPG जोडणी आहे',factPoorHousehold:'कुटुंब PMUY गरीब-कुटुंबाच्या अटी पूर्ण करते',notSure:'माहित नाही',yes:'होय',no:'नाही',maharashtra:'महाराष्ट्र',otherState:'दुसरे राज्य',agePrompt:'वयोगट निवडा',incomePath:'BPL किंवा ₹२१,००० पर्यंत वार्षिक उत्पन्न',girlIncome:'वार्षिक उत्पन्न ₹१,००,००० पर्यंत',stateHint:'या संग्रहात सध्या महाराष्ट्रातील योजना आहेत.',factsSaved:'माहिती तपासायला तयार',ruleCta:'जुळवणी पाहण्यासाठी तपशील निश्चित करा',filterResults:'शोध आणि गाळणी',noSearchResults:'योजना सापडली नाही',noSearchHelp:'दुसरा शब्द वापरून पाहा किंवा दुसरा प्रकार निवडा.',catalogueKicker:'पडताळलेल्या योजना',printDisclaimer:'ही तयारीची माहिती आहे, अधिकृत अर्ज नाही.',downloadJson:'माझी माहिती डाउनलोड करा',clearNotice:'यामुळे फक्त या ब्राउझरमधील मसुदे पुसले जातील.',exampleFarmerText:'आम्ही महाराष्ट्रात राहतो. आमचे कुटुंब शेती करते आणि शेतीची जमीन आहे. कुटुंबात कोणी आयकर भरत नाही किंवा सरकारी कर्मचारी नाही.',exampleGirlText:'आम्ही महाराष्ट्रात राहतो. माझ्या मुलीचा जन्म मे २०२३ मध्ये झाला. आमच्याकडे केशरी रेशन कार्ड आहे आणि वार्षिक उत्पन्न ₹८०,००० आहे.',exampleSeniorText:'माझ्या वडिलांचे वय ६८ आहे. आम्ही महाराष्ट्रात राहतो आणि कुटुंबाचे नाव BPL यादीत आहे.'},
-  hi:{tellMore:'पहले अपनी परिस्थिति के बारे में थोड़ा बताएँ।',brandTag:'आपके लाभ, आपका साथी',skip:'मुख्य सामग्री पर जाएँ',navDiscover:'योजनाएँ खोजें',navExplore:'योजनाएँ देखें',navSaved:'सहेजी योजनाएँ',navApplications:'मेरी तैयारी',pilotLabel:'महाराष्ट्र पायलट · ६ सत्यापित योजनाएँ',heroTitle:'जिस मदद की आप तलाश में हैं<br /><em>वह आपके क़रीब हो सकती है।</em>',heroSubtitle:'अपनी परिस्थिति के बारे में थोड़ा बताएँ। योजनाएँ खोजने, नियम समझने और अगला कदम तैयार करने में हम मदद करेंगे।',heroPoint1:'नियम जाँचे जाते हैं, अनुमान नहीं',heroPoint2:'हर योजना के साथ आधिकारिक स्रोत',trustRules:'स्पष्ट नियमों से पात्रता जाँच',trustSources:'हर योजना का आधिकारिक स्रोत',trustPrivate:'आपकी जानकारी इसी डिवाइस पर',copilotLabel:'आपका योजना साथी',storyTitle:'आपकी परिस्थिति क्या है?',stepOne:'चरण १ में से २',storyIntro:'अपनी भाषा में लिखें या बोलें। परिवार की थोड़ी जानकारी से नियम जाँचने में मदद मिल सकती है।',storyLabel:'अपनी परिस्थिति बताएँ',storyPlaceholder:'उदाहरण: हम महाराष्ट्र में रहते हैं। हमारा परिवार खेती करता है, पत्नी की उम्र ४२ है और हमारे पास नारंगी राशन कार्ड है…',speak:'बोलें',privacyStory:'जानकारी निकालने के लिए आपकी बात Ollama को भेजी जाती है। आधार या बैंक नंबर न लिखें।',tryExample:'उदाहरण:',exampleFarmer:'किसान परिवार',exampleGirl:'स्कूल जाती बेटी',exampleSenior:'बुज़ुर्ग माता-पिता',manualFallbackTitle:'आगे बढ़ते हैं',manualFallbackText:'भाषा सेवा अभी जुड़ी नहीं है। इसके बदले कुछ आसान सवालों के जवाब दें।',openQuestions:'सवालों के जवाब दें →',guidedAlternative:'मैं सवालों के जवाब देना चाहूँगा',checkSchemes:'मेरी योजनाएँ खोजें',readingStory:'आपकी बात समझ रहे हैं…',browseLabel:'दूसरे तरीक़े से खोजें',momentsTitle:'अपने लिए ज़रूरी बात से शुरू करें',seeAll:'सभी योजनाएँ देखें',catFarming:'खेती',catFarmingHint:'किसान परिवारों के लिए सहायता',catFamily:'महिलाएँ और बच्चे',catFamilyHint:'हर नए पड़ाव में मदद',catSupport:'मासिक सहायता',catSupportHint:'थोड़ी और निश्चितता',catSenior:'बुज़ुर्ग नागरिक',catSeniorHint:'बढ़ती उम्र में सहायता',catHealth:'स्वास्थ्य कवच',catHealthHint:'बुज़ुर्ग परिजन के लिए',catEnergy:'स्वच्छ ईंधन',catEnergyHint:'खाना पकाने का सुरक्षित विकल्प',scopeNote:'योजना साथी महाराष्ट्र पायलट है। अभी कुछ चुनिंदा योजनाएँ शामिल हैं; सत्यापित सूची बढ़ाते रहेंगे।',browsePilot:'पायलट देखें →',exploreLabel:'सत्यापित योजना सूची',exploreTitle:'योजनाएँ खोजें',exploreSubtitle:'महाराष्ट्र पायलट की योजनाएँ देखें। हर योजना के साथ स्रोत, शर्तें और दस्तावेज़ दिए हैं।',searchPlaceholder:'योजना या सहायता खोजें…',filterAll:'सभी योजनाएँ',filterFarming:'खेती',filterFamily:'महिलाएँ और बच्चे',filterSupport:'मासिक सहायता',filterSenior:'बुज़ुर्ग नागरिक',filterHealth:'स्वास्थ्य कवच',filterEnergy:'स्वच्छ ईंधन',catalogNote:'यह सारांश है, आवेदन का निर्णय नहीं। विभाग के मौजूदा निर्देश ज़रूर देखें।',savedLabel:'आपकी सूची',savedTitle:'सहेजी योजनाएँ',savedSubtitle:'ज़रूरी योजनाएँ अपने पास रखें।',prepLabel:'एक बार में एक कदम',applicationsTitle:'आपकी तैयारी',applicationsSubtitle:'दस्तावेज़ जुटाएँ, नोट रखें और अगली मुलाकात के लिए मसौदा तैयार करें।',prepBannerTitle:'आपकी जानकारी आपकी है',prepBannerText:'मसौदे इसी ब्राउज़र में सहेजे जाते हैं। सरकारी कार्यालय को कुछ जमा नहीं होता।',clearDrafts:'मसौदे मिटाएँ',footerDisclaimer:'नागरिक मार्गदर्शिका, सरकारी कार्यालय नहीं। अंतिम पात्रता विभाग तय करता है।',howItWorks:'कैसे काम करता है',guidedEyebrow:'कुछ आसान सवाल',guidedTitle:'आपकी जानकारी भरें',guidedSubtitle:'जितना पता है बताएँ। जो नहीं पता, उसे छोड़ दें।',localOnly:'सिर्फ़ इसी ब्राउज़र में सहेजा गया',reviewAnswers:'मेरे जवाब देखें →',guideLabel:'योजना साथी कैसे काम करता है',guideTitle:'हर कदम साफ़ और आसान।',guideStep1:'अपनी परिस्थिति बताएँ',guideStep1Body:'लिखें, बोलें या आसान सवालों के जवाब दें। क्या बताना है, यह आप तय करें।',guideStep2:'अपनी जानकारी जाँचें',guideStep2Body:'भाषा मॉडल संभावित जानकारी निकालता है। मिलान से पहले आप उसे जाँचते और सुधारते हैं।',guideStep3:'अगला कदम तैयार करें',guideStep3Body:'निश्चित नियम इंजन योजना की शर्तें जाँचता है। योजना सहेजें और तैयारी का मसौदा छापें।',guideNote:'यह छोटा सत्यापित पायलट है। यह मार्गदर्शन है, सरकारी मंज़ूरी नहीं।',reviewLabel:'चरण २ में से २ · अपनी जानकारी जाँचें',reviewTitle:'क्या यह जानकारी सही है?',reviewSubtitle:'आपकी बात से ये जानकारी निकाली है। सुधार करें या जो पता नहीं उसे खाली छोड़ें।',editStory:'जानकारी बदलें',applyRules:'योजना के नियम जाँचें',eligibleHeading:'संभावित योजना',needHeading:'हो सकती है — एक बात और जाँचें',notConfirmed:'अभी पात्रता पक्की नहीं',noCandidates:'इन जानकारियों से कोई योजना पक्की नहीं हुई।',noCandidatesHelp:'जवाब बदलें या पायलट की पूरी सूची देखें।',missingPrefix:'इस योजना को जाँचने के लिए बताएँ:',matchesCount:'संभावित योजनाएँ',shownResults:'आपके जवाब से मेल खाती या एक और जानकारी माँगती योजनाएँ।',statusEligible:'मुख्य शर्तें मेल खाती हैं',statusNeeds:'जानकारी चाहिए',statusNot:'मेल नहीं खाती',whyFits:'आपके लिए क्यों हो सकती है',needsInfo:'अभी जाँचना है',documents:'जुटाने के दस्तावेज़',officialSource:'आधिकारिक स्रोत',saveScheme:'सहेजें',savedScheme:'सहेजी',prepare:'आवेदन की तैयारी',readResults:'सुनें',printResults:'सारांश छापें',detailsUpdated:'जवाब अपडेट हुए',savedToast:'सूची में सहेजा',removedToast:'सहेजी सूची से हटाया',draftCreated:'तैयारी का मसौदा बना',emptySaved:'आपकी सूची खाली है',emptySavedText:'योजना सहेजकर यहाँ रखें।',emptyApplications:'अभी कोई तैयारी मसौदा नहीं',emptyApplicationsText:'योजना में “आवेदन की तैयारी” चुनकर दस्तावेज़ सूची और मसौदा शुरू करें।',exploreSchemes:'योजनाएँ देखें',checkAgain:'मेरी जानकारी जाँचें',sourceUpdated:'स्रोत जाँचा गया',notSubmit:'यह मसौदा आवेदन जमा नहीं करता।',draftTitle:'आवेदन की तैयारी',draftStatus:'स्थानीय तैयारी मसौदा',draftFormTitle:'आवेदन की जानकारी',applicantName:'आवेदक का नाम',district:'ज़िला',village:'गाँव / शहर',ageYears:'उम्र',incomeRupees:'परिवार की सालाना आय (₹)',schemeInterest:'योजना',documentsDone:'दस्तावेज़ सूची',notesLabel:'मुलाक़ात के लिए नोट',notesPlaceholder:'सवाल, कार्यालय का पता या अगला कदम…',printDraft:'मसौदा छापें',deleteDraft:'मिटाएँ',progressLabel:'दस्तावेज़ तैयार',progressOf:'में से',confirmDeleteDraft:'यह स्थानीय मसौदा मिटाएँ?',confirmClearDrafts:'सभी स्थानीय मसौदे मिटाएँ?',draftDeleted:'मसौदा मिटाया',draftsCleared:'मसौदे मिटाए',textSize:'बड़ा अक्षर',voiceUnavailable:'इस ब्राउज़र में आवाज़ की सुविधा उपलब्ध नहीं।',voiceListening:'सुन रहे हैं… रोकने के लिए फिर दबाएँ',voiceAdded:'आवाज़ से जानकारी जुड़ी',nothingToRead:'सुनाने के लिए योजना के नतीजे नहीं हैं।',factState:'निवास का राज्य',factAge:'जिस व्यक्ति की पात्रता जाँच रहे हैं, उसकी उम्र',factFarmer:'आपका परिवार खेती करता है',factLand:'खेती की ज़मीन परिवार के नाम है',factIncome:'परिवार की सालाना आय (₹)',factBpl:'परिवार BPL सूची में है',factSupport:'किसी पात्र कारण से सहायता चाहिए',factGirl:'परिवार में बेटी है',factGirlDate:'बेटी का जन्म १ अप्रैल २०२३ या उसके बाद',factRation:'पीला या नारंगी राशन कार्ड',factTax:'परिवार के किसी सदस्य ने आयकर भरा',factGov:'परिवार का सदस्य सरकारी कर्मचारी है',factExclusion:'PM-KISAN की कोई दूसरी अपात्रता लागू है',factApplicantWoman:'आवेदन करने वाली व्यक्ति महिला हैं',factLpg:'परिवार में किसी के नाम LPG कनेक्शन है',factPoorHousehold:'परिवार PMUY की गरीब-परिवार शर्त पूरी करता है',notSure:'पता नहीं',yes:'हाँ',no:'नहीं',maharashtra:'महाराष्ट्र',otherState:'दूसरा राज्य',agePrompt:'उम्र चुनें',incomePath:'BPL या सालाना आय ₹२१,००० तक',girlIncome:'सालाना आय ₹१,००,००० तक',stateHint:'इस सूची में अभी महाराष्ट्र की योजनाएँ हैं।',factsSaved:'जानकारी जाँचने के लिए तैयार',ruleCta:'मिलान देखने के लिए जानकारी पक्की करें',filterResults:'खोज और फ़िल्टर',noSearchResults:'योजनाएँ नहीं मिलीं',noSearchHelp:'दूसरा शब्द या श्रेणी चुनकर देखें।',catalogueKicker:'सत्यापित योजनाएँ',printDisclaimer:'यह तैयारी सारांश है, आधिकारिक आवेदन नहीं।',downloadJson:'मेरी जानकारी डाउनलोड करें',clearNotice:'इससे इसी ब्राउज़र में सहेजे मसौदे मिटेंगे।',exampleFarmerText:'हम महाराष्ट्र में रहते हैं। हमारा परिवार खेती करता है और खेती की ज़मीन है। परिवार में कोई आयकर नहीं भरता या सरकारी कर्मचारी नहीं है।',exampleGirlText:'हम महाराष्ट्र में रहते हैं। मेरी बेटी का जन्म मई २०२३ में हुआ। हमारे पास नारंगी राशन कार्ड है और सालाना आय ₹८०,००० है।',exampleSeniorText:'मेरे पिता ६८ साल के हैं। हम महाराष्ट्र में रहते हैं और परिवार BPL सूची में है.'}
+// Multilingual translations for UI copy
+const copy = {
+  mr: {
+    navDiscover: 'योजना शोधा',
+    navSaved: 'जतन केलेल्या',
+    navApplications: 'माझे अर्ज',
+    navSubscriptions: 'सदस्यता व दर',
+    navCsc: 'सीएससी केंद्र',
+    roleLabel: 'भूमिका:',
+    eyebrow: 'प्रत्येक नागरिकाचा हक्काचा साथीदार',
+    headline: 'तुम्ही पात्र असलेल्या सर्व शासकीय योजना,<br/><em>तुमच्या स्वतःच्या भाषेत सोप्या शब्दात.</em>',
+    subhead: 'तुमच्या कुटुंबाची परिस्थिती मराठी, हिंदी किंवा इंग्रजीत सांगा. आमचे नियम-आधारित इंजिन योजनांची अचूक पडताळणी करेल, कारणे समजावेल, कागदपत्रांची यादी देईल आणि थेट अर्ज तयार करून देईल.',
+    yourStory: 'कौटुंबिक परिस्थिती सांगा',
+    tellUs: 'तुमच्या कुटुंबाबद्दल बोला किंवा लिहा',
+    plainWords: 'कोणतेही अवघड किंवा कायदेशीर शब्द वापरण्याची गरज नाही. शेती, जमीन, रेशन कार्ड, घरातील मुले किंवा उत्पन्नाबद्दल रोजच्या साध्या भाषेत सांगा.',
+    trySample: '💡 एका क्लिकवर उदाहरणे तपासा:',
+    chipFarmer: '२ एकर जमीन असलेला शेतकरी',
+    chipWoman: 'केशरी रेशन कार्ड व मुलगी असलेली महिला',
+    chipSenior: '६८ वर्षे वय असलेले वृद्ध नागरिक',
+    chipArtisan: 'सुतार / लोहार कारागीर (टूलकिट)',
+    chipStudent: 'कॉलेजमध्ये शिकणारा विद्यार्थी',
+    storyLabel: 'तुमची परिस्थिती (येथे बोला किंवा लिहा):',
+    speak: 'मराठीत बोला',
+    listening: 'ऐकत आहे... बोला',
+    privacyHint: 'आपली माहिती अधिकृत शासकीय नियमांनुसार तपासली जाते. येथे आधार किंवा बँक पिन क्रमांक लिहू नका.',
+    stateLabel: 'वास्तव्य असलेले राज्य',
+    familyLabel: 'मुख्य व्यवसाय / वर्गवारी',
+    rulesFirst: 'अधिकृत शासकीय नियमावलीनुसार पडताळणी',
+    checkSchemes: 'माझ्यासाठीच्या योजना शोधा',
+    trustRules: 'नियम-आधारित अचूकता: पात्रतेत कोणताही खोटा अंदाज नाही',
+    trustSources: '१००% अधिकृत शासकीय मंत्रालयांचे पोर्टल व थेट लिंक्स',
+    trustPrivacy: 'गोपनीयता सुरक्षित: माहिती आपल्या डिव्हाइसवर सुरक्षित राहते',
+    savedTitle: 'तुम्ही जतन केलेल्या योजना',
+    savedSub: 'तुम्हाला किंवा तुमच्या कुटुंबियांना अर्ज करायच्या योजनांची यादी.',
+    appsTitle: 'अर्जाची तयारी व चेकलिस्ट',
+    appsSub: 'आवश्यक कागदपत्रे गोळा करा, अधिकृत अर्ज तयार करा आणि शासकीय कार्यालयात सादर करा.',
+    pricingEyebrow: 'पारदर्शक व नागरिक-केंद्रित दर',
+    pricingTitle: 'नागरिक, कुटुंबे आणि आपले सरकार / सीएससी केंद्रांसाठी योजना',
+    pricingSub: 'नागरिकांसाठी योजना शोधणे कायम १००% मोफत राहील. कुटुंबाच्या एकत्र योजना, आपोआप भरलेले अधिकृत अर्ज, व्हॉट्सॲप अलर्ट्स किंवा सीएससी केंद्राच्या कामासाठी अपग्रेड करा.',
+    monthly: 'मासिक',
+    yearly: 'वार्षिक',
+    cscPortalTitle: 'आपले सरकार व सीएससी केंद्र डॅशबोर्ड',
+    cscPortalSub: 'ग्राम पातळीवरील आपले सरकार, सीएससी व सेतू केंद्र चालकांसाठी जलद नागरिक अर्ज साधन.',
+    step1: 'टप्पा १ पैकी २ · तुमची माहिती',
+    step2: 'टप्पा २ पैकी २ · माहिती पडताळणी',
+    confirmDetails: 'तुमच्या बोलण्यातून घेतलेली माहिती तपासा',
+    factReviewHint: 'खालील माहिती बरोबर आहे का ते तपासा. चुकीची माहिती दुरुस्त करा; न विचारलेली माहिती रिकामी राहील.',
+    runRules: 'योजनांचे नियम तपासा',
+    resultsLabel: 'तुमच्यासाठी पात्र योजना',
+    matchesFound: 'पात्र योजना सापडल्या',
+    whyFit: 'तुम्ही का पात्र आहात (शासकीय कारणे)',
+    mandatoryDocs: 'आवश्यक अधिकृत कागदपत्रे',
+    officialSource: 'अधिकृत शासकीय स्रोत',
+    prefillForm: '📝 अधिकृत अर्ज तयार करा',
+    saveScheme: '♡ जतन करा',
+    savedScheme: '♥ जतन केले',
+    listenVoice: '🔊 बोलून ऐका',
+    readResultsAloud: '🔊 सर्व निकाल ऐका',
+    editDetails: '← माहिती बदला',
+    checkAgain: 'पुन्हा तपासा',
+    noMatchTitle: 'अधिक माहितीची गरज आहे',
+    noMatchDesc: 'दिलेल्या माहितीनुसार थेट योजना जुळली नाही. कृपया वय, रेशन कार्डचा रंग किंवा शेतीजमिनीची माहिती जोडून पुन्हा तपासा.',
+    disclaimer: 'सूचना: ही प्राथमिक तपासणी अधिकृत शासकीय नियमांवर आधारित आहे. अंतिम मंजुरी संबंधित शासकीय कार्यालयाच्या मूळ कागदपत्र पडताळणीवर अवलंबून राहील.',
+    addedToast: 'योजना जतन केली!',
+    removedToast: 'योजना यादीतून हटवली!',
+    planActivatedToast: 'सदस्यता यशस्वीरित्या सुरू झाली!'
+  },
+  hi: {
+    navDiscover: 'योजनाएँ खोजें',
+    navSaved: 'सहेजी गई',
+    navApplications: 'मेरे आवेदन',
+    navSubscriptions: 'सदस्यता व दर',
+    navCsc: 'सीएससी केंद्र',
+    roleLabel: 'भूमिका:',
+    eyebrow: 'हर नागरिक का विश्वसनीय साथी',
+    headline: 'जिन सरकारी योजनाओं के आप पात्र हैं,<br/><em>अपनी भाषा में आसान शब्दों में समझें।</em>',
+    subhead: 'अपने परिवार की स्थिति हिंदी, मराठी या अंग्रेज़ी में बताएं। हमारा नियम-आधारित इंजन आधिकारिक पात्रता जांचेगा, कारण समझाएगा, दस्तावेज़ सूची देगा और आवेदन पत्र तैयार करेगा।',
+    yourStory: 'पारिवारिक स्थिति बताएं',
+    tellUs: 'अपने परिवार के बारे में बोलें या लिखें',
+    plainWords: 'कठिन कानूनी शब्दों की ज़रूरत नहीं। खेती, ज़मीन, राशन कार्ड, बच्चों की पढ़ाई या आय के बारे में रोज़मर्रा की भाषा में बताएं।',
+    trySample: '💡 एक क्लिक में उदाहरण देखें:',
+    chipFarmer: '2 एकड़ ज़मीन वाला किसान',
+    chipWoman: 'नारंगी राशन कार्ड व बेटी वाली महिला',
+    chipSenior: '68 वर्ष के बुजुर्ग नागरिक',
+    chipArtisan: 'बढ़ई / लोहार कारीगर (टूलकिट)',
+    chipStudent: 'कॉलेज में पढ़ने वाला छात्र',
+    storyLabel: 'अपनी स्थिति बताएं (बोलें या लिखें):',
+    speak: 'हिंदी में बोलें',
+    listening: 'सुन रहे हैं... बोलिए',
+    privacyHint: 'आपकी जानकारी सरकारी नियमों से जांची जाती है। कृपया आधार या बैंक पिन न लिखें।',
+    stateLabel: 'निवास का राज्य',
+    familyLabel: 'मुख्य पेशा / श्रेणी',
+    rulesFirst: 'आधिकारिक सरकारी नियमों द्वारा सत्यापन',
+    checkSchemes: 'मेरी योजनाएं खोजें',
+    trustRules: 'नियम-आधारित सटीकता: पात्रता में कोई मनगढ़ंत अनुमान नहीं',
+    trustSources: '100% आधिकारिक सरकारी मंत्रालयों के पोर्टल व लिंक',
+    trustPrivacy: 'पूर्ण गोपनीयता: जानकारी आपके डिवाइस पर सुरक्षित है',
+    savedTitle: 'आपकी सहेजी गई योजनाएं',
+    savedSub: 'जिन योजनाओं में आप आवेदन करना चाहते हैं उनकी सूची।',
+    appsTitle: 'आवेदन तैयारी व चेकलिस्ट',
+    appsSub: 'दस्तावेज़ जुटाएं, आधिकारिक आवेदन फॉर्म तैयार करें और जमा करें।',
+    pricingEyebrow: 'पारदर्शी व नागरिक-हितैषी मूल्य',
+    pricingTitle: 'नागरिकों, परिवारों और सीएससी जन सेवा केंद्रों के लिए योजनाएं',
+    pricingSub: 'नागरिकों के लिए योजना खोज हमेशा मुफ्त रहेगी। परिवार के संयुक्त पोर्टफोलियो, पहले से भरे फॉर्म, व्हाट्सएप अलर्ट व सीएससी केंद्र के लिए अपग्रेड करें।',
+    monthly: 'मासिक',
+    yearly: 'वार्षिक',
+    cscPortalTitle: 'सीएससी जन सेवा केंद्र पोर्टल',
+    cscPortalSub: 'ग्राम स्तरीय वीएलई (VLE) और साइबर कैफ़े के लिए त्वरित नागरिक सेवा टूल।',
+    step1: 'चरण 1 / 2 · आपकी स्थिति',
+    step2: 'चरण 2 / 2 · विवरण सत्यापन',
+    confirmDetails: 'अपनी बताई गई जानकारी की पुष्टि करें',
+    factReviewHint: 'जांच लें कि क्या यह जानकारी सही है। गलत जानकारी को बदलें; अधूरी जानकारी खाली रहेगी।',
+    runRules: 'योजना के नियम जांचें',
+    resultsLabel: 'आपके लिए पात्र योजनाएं',
+    matchesFound: 'पात्र योजनाएं मिलीं',
+    whyFit: 'आप क्यों पात्र हैं (सरकारी कारण)',
+    mandatoryDocs: 'आवश्यक आधिकारिक दस्तावेज़',
+    officialSource: 'सरकारी आधिकारिक स्रोत',
+    prefillForm: '📝 आधिकारिक फॉर्म तैयार करें',
+    saveScheme: '♡ सहेजें',
+    savedScheme: '♥ सहेजा गया',
+    listenVoice: '🔊 बोलकर सुनें',
+    readResultsAloud: '🔊 सभी परिणाम सुनें',
+    editDetails: '← जानकारी बदलें',
+    checkAgain: 'पुनः जांचें',
+    noMatchTitle: 'अधिक जानकारी की आवश्यकता है',
+    noMatchDesc: 'दी गई जानकारी से कोई सीधी योजना नहीं मिली। कृपया उम्र, राशन कार्ड या ज़मीन का विवरण जोड़कर पुनः प्रयास करें।',
+    disclaimer: 'सूचना: यह जांच आधिकारिक सरकारी नियमों पर आधारित है। अंतिम स्वीकृति संबंधित विभाग द्वारा दस्तावेज़ सत्यापन पर निर्भर है।',
+    addedToast: 'योजना सहेजी गई!',
+    removedToast: 'योजना हटा दी गई!',
+    planActivatedToast: 'सदस्यता सफलतापूर्वक सक्रिय हुई!'
+  },
+  en: {
+    navDiscover: 'Find schemes',
+    navSaved: 'Saved',
+    navApplications: 'My applications',
+    navSubscriptions: 'Plans & Pricing',
+    navCsc: 'CSC Partner',
+    roleLabel: 'Role:',
+    eyebrow: 'A TRUSTED CITIZEN COPILOT',
+    headline: 'Government schemes you qualify for,<br/><em>explained simply in your language.</em>',
+    subhead: 'Describe your family situation in Hindi, Marathi, or English. Our deterministic rules engine checks official criteria, explains why you qualify, lists required documents, and prepares your pre-filled application.',
+    yourStory: 'DESCRIBE YOUR SITUATION',
+    tellUs: 'Speak or write about your family',
+    plainWords: 'No legal terms needed. Mention your occupation, land, ration card, children, or income in your daily spoken words.',
+    trySample: '💡 Tap an example story to try:',
+    chipFarmer: 'Maharashtra Farmer with 2 acres',
+    chipWoman: 'Woman with Orange card & daughter',
+    chipSenior: 'Senior citizen (68 yrs) without income',
+    chipArtisan: 'Carpenter / Artisan seeking toolkit',
+    chipStudent: 'College student seeking scholarship',
+    storyLabel: 'Your family situation (speak or write):',
+    speak: 'Speak in Marathi / Hindi',
+    listening: 'Listening to your voice...',
+    privacyHint: 'Evaluated by a fixed deterministic rules engine. Please do not enter sensitive Aadhaar or bank PIN numbers.',
+    stateLabel: 'State of residence',
+    familyLabel: 'Primary occupation / Category',
+    rulesFirst: 'Eligibility verified by official scheme predicates',
+    checkSchemes: 'Find Matching Schemes',
+    trustRules: 'Rules-engine precision: Zero LLM hallucinations on eligibility',
+    trustSources: '100% verified links to official Ministry & MahaDBT portals',
+    trustPrivacy: 'Data privacy: Processed securely on this device',
+    savedTitle: 'Your Saved Schemes',
+    savedSub: 'Keep track of schemes you and your family plan to apply for.',
+    appsTitle: 'My Application Drafts & Checklists',
+    appsSub: 'Gather documents, prepare pre-filled official application forms, and track submissions.',
+    pricingEyebrow: 'TRANSPARENT & CIVIC-MINDED PRICING',
+    pricingTitle: 'Plans for Citizens, Families & CSC Centers',
+    pricingSub: 'Citizen discovery is 100% free forever. Upgrade for multi-family portfolios, official pre-filled forms, WhatsApp deadline alerts, or CSC Center bulk processing.',
+    monthly: 'Monthly',
+    yearly: 'Yearly',
+    cscPortalTitle: 'Aaple Sarkar & CSC Operator Portal',
+    cscPortalSub: 'High-speed citizen intake and branded application forms for Village Level Entrepreneurs (VLEs).',
+    step1: 'STEP 1 OF 2 · YOUR STORY',
+    step2: 'STEP 2 OF 2 · FACT CONFIRMATION',
+    confirmDetails: 'Confirm your extracted details',
+    factReviewHint: 'Review what was understood from your words. Correct any detail; unstated details remain blank.',
+    runRules: 'Evaluate Scheme Rules',
+    resultsLabel: 'Your Qualifying Schemes',
+    matchesFound: 'eligible schemes matched',
+    whyFit: 'Why you qualify (Official reasons)',
+    mandatoryDocs: 'Mandatory Documents Needed',
+    officialSource: 'Official Government Portal',
+    prefillForm: '📝 Pre-fill Application Form',
+    saveScheme: '♡ Save Scheme',
+    savedScheme: '♥ Saved',
+    listenVoice: '🔊 Listen',
+    readResultsAloud: '🔊 Read All Results',
+    editDetails: '← Edit Details',
+    checkAgain: 'Check Again',
+    noMatchTitle: 'More information needed',
+    noMatchDesc: 'We could not confirm a match with the current details. Please provide your age, ration card type, or land acreage to re-evaluate.',
+    disclaimer: 'Note: This initial evaluation is based on official government guidelines. Final approval is subject to document verification by the administering department.',
+    addedToast: 'Scheme saved to your shortlist!',
+    removedToast: 'Scheme removed from saved list!',
+    planActivatedToast: 'Plan activated successfully!'
+  }
 };
 
-const $ = selector => document.querySelector(selector);
-const $$ = selector => [...document.querySelectorAll(selector)];
-const t = key => words[lang]?.[key] ?? words.en[key] ?? key;
-const parseStore = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } };
-let lang = ['en','mr','hi'].includes(localStorage.getItem('ss-lang')) ? localStorage.getItem('ss-lang') : 'en';
-let facts = null;
-let evaluations = [];
-let filterCategory = 'all';
-let searchQuery = '';
-let saved = new Set(parseStore('ss-saved', []));
-let drafts = parseStore('ss-drafts', []);
+// Application State
+let lang = localStorage.getItem('ss-lang') || 'mr';
+let currentFacts = null;
+let currentMatches = [];
+let savedSchemes = new Set(JSON.parse(localStorage.getItem('ss-saved') || '[]'));
+let drafts = JSON.parse(localStorage.getItem('ss-drafts') || '[]');
+let isYearlyBilling = false;
+let pendingUpgradePlanId = null;
 
-const labels = {
-  state:['factState','state'], applicantWoman:['factApplicantWoman','boolean'], lpgConnection:['factLpg','boolean'], poorHousehold:['factPoorHousehold','boolean'], age:['factAge','number'], farmer:['factFarmer','boolean'], landOwned:['factLand','boolean'], annualIncome:['factIncome','number'], bpl:['factBpl','boolean'], supportNeed:['factSupport','boolean'], hasGirlChild:['factGirl','boolean'], girlBornAfter2023:['factGirlDate','boolean'], rationCardEligible:['factRation','boolean'], incomeTaxPayer:['factTax','boolean'], governmentEmployee:['factGov','boolean'], otherPmKisanExclusion:['factExclusion','boolean']
-};
-const baseFacts = () => Object.fromEntries(factFields.map(key => [key, null]));
-const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const localized = (item, key) => item[`${key}${lang === 'hi' ? 'Hi' : lang === 'mr' ? 'Mr' : ''}`] || item[key] || '';
-const schemeName = scheme => localized(scheme, 'name');
-const schemeAmount = scheme => localized(scheme, 'amount');
-const schemeSummary = scheme => localized(scheme, 'summary');
-const schemeChecks = scheme => localized(scheme, 'checks') || scheme.checks;
-const schemeDocs = scheme => localized(scheme, 'docs') || scheme.docs;
-const categoryName = id => t(({farming:'catFarming',family:'catFamily',support:'catSupport',senior:'catSenior',health:'catHealth',energy:'catEnergy'})[id] || 'catSenior');
-const labelName = key => t(labels[key]?.[0] || key);
+// Helpers
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const t = k => (copy[lang] && copy[lang][k]) || copy.en[k] || k;
 
-function setLanguage(code) {
-  lang = code;
-  localStorage.setItem('ss-lang', code);
-  document.documentElement.lang = code;
-  $$('[data-i18n]').forEach(el => { el.innerHTML = t(el.dataset.i18n); });
-  $$('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); });
-  $$('[data-lang]').forEach(button => { const selected = button.dataset.lang === lang; button.classList.toggle('selected', selected); button.setAttribute('aria-pressed', String(selected)); });
-  $('#textSizeBtn').setAttribute('aria-label', t('textSize'));
-  if ($('#story')) $('#charCount').textContent = `${$('#story').value.length.toLocaleString()} / 6,000`;
-  if (facts) renderResults();
-  renderSaved(); renderApplications(); renderCatalog(); renderCategoryFilters();
+// Initialize App
+function init() {
+  updateLanguage(lang);
+  updatePlanBadge();
+  setupEventListeners();
+  renderPricingCards();
+  loadCscProfileIntoUi();
+
+  // Role switcher sync
+  const currentPlan = getCurrentPlan();
+  $('#roleSwitcher').value = currentPlan.id;
 }
 
-function openView(name) {
-  $$('.view').forEach(view => { const active = view.id === `view-${name}`; view.classList.toggle('active-view', active); view.hidden = !active; });
-  $$('.nav-link').forEach(button => button.classList.toggle('active', button.dataset.view === name));
-  if (name === 'explore') { renderCatalog(); renderCategoryFilters(); }
-  if (name === 'saved') renderSaved();
-  if (name === 'applications') renderApplications();
+// Language Switching
+function updateLanguage(newLang) {
+  lang = newLang;
+  localStorage.setItem('ss-lang', lang);
+
+  // Update language buttons
+  $$('.language-switch button').forEach(b => {
+    b.classList.toggle('selected', b.dataset.lang === lang);
+  });
+
+  // Update data-copy elements
+  $$('[data-copy]').forEach(el => {
+    const key = el.dataset.copy;
+    const translation = t(key);
+    if (translation) el.innerHTML = translation;
+  });
+
+  // Update placeholders
+  const storyEl = $('#story');
+  if (lang === 'mr') {
+    storyEl.placeholder = 'उदाहरण: मी महाराष्ट्रातील शेतकरी आहे. वय ४५ वर्षे, २ एकर शेती, केशरी रेशन कार्ड आहे आणि एक मुलगी कॉलेजमध्ये शिकते आहे.';
+  } else if (lang === 'hi') {
+    storyEl.placeholder = 'उदाहरण: मैं महाराष्ट्र का किसान हूँ। उम्र 45 वर्ष, 2 एकड़ ज़मीन, नारंगी राशन कार्ड है और एक बेटी कॉलेज में पढ़ती है।';
+  } else {
+    storyEl.placeholder = 'Example: I am a farmer in Maharashtra. Age 45, own 2 acres of land, have an Orange ration card and a daughter in college.';
+  }
+
+  // Refresh active view content
+  if ($('#view-discover').classList.contains('active-view')) {
+    if (currentFacts) renderResults(currentFacts, currentMatches);
+  } else if ($('#view-saved').classList.contains('active-view')) {
+    renderSaved();
+  } else if ($('#view-applications').classList.contains('active-view')) {
+    renderDrafts();
+  } else if ($('#view-subscriptions').classList.contains('active-view')) {
+    renderPricingCards();
+  }
+}
+
+// Navigation View Switching
+function showView(viewName) {
+  $$('.view').forEach(v => v.classList.remove('active-view'));
+  const target = $(`#view-${viewName}`);
+  if (target) target.classList.add('active-view');
+
+  $$('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === viewName));
+
+  if (viewName === 'saved') renderSaved();
+  if (viewName === 'applications') renderDrafts();
+  if (viewName === 'subscriptions') renderPricingCards();
+  if (viewName === 'csc') loadCscProfileIntoUi();
+
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function toast(message) {
-  const el = $('#toast'); el.textContent = message; el.classList.add('show');
-  clearTimeout(toast.timer); toast.timer = setTimeout(() => el.classList.remove('show'), 2600);
+// Toast Messages
+function showToast(message) {
+  const el = $('#toast');
+  el.textContent = message;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2800);
 }
 
-function buildFactFields(target, values = facts || baseFacts()) {
-  target.innerHTML = factFields.map(key => {
-    const [label, type] = labels[key]; const value = values[key];
-    if (type === 'boolean') return `<label class="fact-field"><span>${t(label)}</span><select name="${key}" data-fact="${key}"><option value="" ${value == null ? 'selected' : ''}>${t('notSure')}</option><option value="true" ${value === true ? 'selected' : ''}>${t('yes')}</option><option value="false" ${value === false ? 'selected' : ''}>${t('no')}</option></select></label>`;
-    if (key === 'state') return `<label class="fact-field"><span>${t(label)}</span><select name="state" data-fact="state"><option value="" ${value == null ? 'selected' : ''}>${t('notSure')}</option><option value="Maharashtra" ${value === 'Maharashtra' ? 'selected' : ''}>${t('maharashtra')}</option><option value="Other" ${value === 'Other' ? 'selected' : ''}>${t('otherState')}</option></select></label>`;
-    const min = type === 'number' ? `min="0" ${key === 'age' ? 'max="120" step="1"' : 'step="1"'}` : '';
-    return `<label class="fact-field"><span>${t(label)}</span><input name="${key}" data-fact="${key}" type="number" ${min} value="${value ?? ''}" placeholder="${t('notSure')}" /></label>`;
-  }).join('');
+// Plan Badge in Header
+function updatePlanBadge() {
+  const plan = getCurrentPlan();
+  const badgeEl = $('#currentPlanBadge');
+  if (badgeEl) {
+    badgeEl.textContent = plan.badge;
+    badgeEl.style.borderColor = plan.color;
+  }
 }
 
-function collectFacts(container) {
-  const next = baseFacts();
-  container.querySelectorAll('[data-fact]').forEach(input => {
-    const key = input.dataset.fact;
-    if (input.type === 'number') next[key] = input.value.trim() === '' ? null : Number(input.value);
-    else if (key === 'state') next[key] = input.value === 'Maharashtra' ? 'Maharashtra' : input.value === 'Other' ? 'Other' : null;
-    else next[key] = input.value === '' ? null : input.value === 'true';
-  });
-  return next;
+// Sample Story Autofill
+function applySampleStory(sampleType) {
+  const storyEl = $('#story');
+  const familyEl = $('#familyType');
+  const stateEl = $('#state');
+
+  stateEl.value = 'Maharashtra';
+
+  if (sampleType === 'farmer') {
+    familyEl.value = 'farmer';
+    storyEl.value = lang === 'mr'
+      ? 'मी महाराष्ट्रातील शेतकरी आहे. माझे वय ४६ वर्षे आहे आणि माझ्या नावावर २ एकर शेतीजमीन आहे. आम्ही आयकर भरत नाही आणि कोणतेही सरकारी कर्मचारी नाही.'
+      : lang === 'hi'
+      ? 'मैं महाराष्ट्र का किसान हूँ। मेरी उम्र 46 वर्ष है और परिवार के नाम 2 एकड़ खेती की ज़मीन है। हम कोई आयकर नहीं देते और कोई सरकारी नौकरी में नहीं है।'
+      : 'I am a farmer in Maharashtra. My age is 46 and I own 2 acres of cultivable agricultural land. We do not pay income tax and no family member is a government employee.';
+  } else if (sampleType === 'woman') {
+    familyEl.value = 'woman';
+    storyEl.value = lang === 'mr'
+      ? 'मी ३४ वर्षांची महिला असून महाराष्ट्रात राहते. आमच्याकडे केशरी रेशन कार्ड आहे. आमच्या घरात २०२३ नंतर जन्मलेली एक लहान मुलगी आहे आणि वार्षिक उत्पन्न १ लाख आहे.'
+      : lang === 'hi'
+      ? 'मैं 34 वर्ष की महिला हूँ और महाराष्ट्र में रहती हूँ। हमारे पास नारंगी राशन कार्ड है। परिवार में 2023 के बाद जन्मी एक बेटी है और सालाना आय 1 लाख रुपये है।'
+      : 'I am a 34-year-old woman residing in Maharashtra. We have an Orange ration card. We have a girl child born after 2023 and our annual household income is 1 lakh rupees.';
+  } else if (sampleType === 'senior') {
+    familyEl.value = 'senior';
+    storyEl.value = lang === 'mr'
+      ? 'माझे वय ६८ वर्षे असून मी वृद्ध नागरिक आहे. माझ्याकडे उत्पन्नाचे कोणतेही साधन नाही, बीपीएल यादीत नाव आहे आणि आधार कार्ड आहे.'
+      : lang === 'hi'
+      ? 'मेरी उम्र 68 वर्ष है और मैं वरिष्ठ नागरिक हूँ। मेरे पास आय का कोई साधन नहीं है, बीपीएल सूची में नाम है और आधार कार्ड है।'
+      : 'My age is 68 years and I am a senior citizen. I have no source of livelihood, our family is in the BPL list, and I have an Aadhaar card.';
+  } else if (sampleType === 'artisan') {
+    familyEl.value = 'artisan';
+    storyEl.value = lang === 'mr'
+      ? 'मी पारंपारिक सुतारकाम करतो. वय ३८ वर्षे आहे. मला आधुनिक हत्यारांचे टूलकिट आणि व्यवसाय वाढवण्यासाठी सवलतीचे कर्ज हवे आहे.'
+      : lang === 'hi'
+      ? 'मैं पारंपरिक बढ़ई का काम करता हूँ। मेरी उम्र 38 वर्ष है। मुझे आधुनिक टूलकिट और व्यापार बढ़ाने के लिए रियायती ब्याज पर ऋण चाहिए।'
+      : 'I work as a traditional carpenter. Age is 38. I need a modern toolkit voucher and a concessional loan to expand my craft.';
+  } else if (sampleType === 'student') {
+    familyEl.value = 'student';
+    storyEl.value = lang === 'mr'
+      ? 'मी पदवीच्या पहिल्या वर्षात शिकत असलेला विद्यार्थी आहे. कुटुंबाचे वार्षिक उत्पन्न दीड लाख असून आमच्याकडे जात प्रमाणपत्र व डोमिसाईल आहे.'
+      : lang === 'hi'
+      ? 'मैं कॉलेज में डिग्री का छात्र हूँ। परिवार की सालाना आय 1.5 लाख है और हमारे पास जाति प्रमाण पत्र तथा अधिवास प्रमाण पत्र है।'
+      : 'I am a college degree student. Family annual income is 1.5 lakh rupees, and I possess a Caste Certificate and Maharashtra Domicile certificate.';
+  }
+
+  showToast('Sample story applied! Click "Find Matching Schemes" to evaluate.');
 }
 
-function startReview(candidateFacts) {
-  facts = { ...baseFacts(), ...candidateFacts };
-  openView('results');
-  renderResults();
-}
-
-function showGuided() {
-  buildFactFields($('#guidedFields'), facts || baseFacts());
-  $('#guidedDialog').showModal();
-}
-
+// Intake & Facts Extraction
 async function analyzeStory() {
   const story = $('#story').value.trim();
-  if (!story) { $('#story').focus(); toast(t('tellMore')); return; }
-  const button = $('#checkBtn'); button.disabled = true; $('#loadingMessage').classList.remove('hidden'); $('#ollamaNotice').classList.add('hidden');
-  try {
-    const response = await fetch('/api/extract', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ text:story, language:lang }) });
-    const payload = await response.json();
-    if (!response.ok) throw new Error(payload.error || 'Ollama unavailable');
-    if (!payload.facts || typeof payload.facts !== 'object') throw new Error('Invalid fact response');
-    const clean = baseFacts();
-    for (const key of factFields) {
-      const value = payload.facts[key];
-      if (key === 'age') clean[key] = Number.isInteger(value) && value >= 0 && value <= 120 ? value : null;
-      else if (key === 'annualIncome') clean[key] = Number.isFinite(value) && value >= 0 ? value : null;
-      else if (key === 'state') clean[key] = value === 'Maharashtra' ? value : null;
-      else clean[key] = value === true || value === false ? value : null;
-    }
-    startReview(clean);
-  } catch (error) {
-    $('#ollamaNotice').classList.remove('hidden');
-    $('#ollamaNotice').setAttribute('data-error', error.message || '');
-    $('#ollamaNotice').scrollIntoView({ behavior:'smooth', block:'center' });
-  } finally { button.disabled = false; $('#loadingMessage').classList.add('hidden'); }
-}
+  const state = $('#state').value;
+  const familyType = $('#familyType').value;
 
-function factValue(factKey) {
-  if (factKey === 'incomePath') {
-    if (facts.bpl === true) return true;
-    if (Number.isFinite(facts.annualIncome) && facts.annualIncome <= 21000) return true;
-    if (facts.bpl === false && Number.isFinite(facts.annualIncome) && facts.annualIncome > 21000) return false;
-    return null;
+  if (!story) {
+    $('#story').focus();
+    showToast(lang === 'mr' ? 'कृपया तुमच्या परिस्थितीबद्दल थोडे लिहा किंवा बोला.' : 'Please enter or speak your situation.');
+    return;
   }
-  return facts[factKey];
+
+  const checkBtn = $('#checkBtn');
+  checkBtn.disabled = true;
+  const originalText = checkBtn.innerHTML;
+  checkBtn.innerHTML = `<span>⏳ ${lang === 'mr' ? 'तपासत आहे...' : 'Analyzing facts...'}</span>`;
+
+  try {
+    let facts = null;
+    try {
+      const response = await fetch('/api/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: story, state, language: lang })
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.facts) facts = data.facts;
+      }
+    } catch {
+      // Offline fallback
+    }
+
+    // High-accuracy fallback extractor
+    if (!facts) {
+      facts = extractFacts(story, state, familyType);
+    } else {
+      if (familyType === 'farmer') facts.farmer = true;
+      if (familyType === 'woman') { facts.gender = 'female'; facts.womanApplicant = true; }
+      if (familyType === 'senior') facts.seniorCitizen = true;
+      if (familyType === 'artisan') facts.artisan = true;
+      if (familyType === 'student') facts.studentInFamily = true;
+      if (state) facts.state = state;
+    }
+
+    currentFacts = facts;
+    $('#intakePanel').classList.add('hidden');
+    $('#progressBar').style.width = '68%';
+    $('#stepLabel').textContent = t('step2');
+    $('#progressHint').textContent = t('confirmDetails');
+
+    renderFactConfirmation();
+    $('#results').classList.remove('hidden');
+    $('#results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (err) {
+    showToast('Error evaluating details. Please check your inputs.');
+  } finally {
+    checkBtn.disabled = false;
+    checkBtn.innerHTML = originalText;
+  }
 }
 
-function formatMissing(key) {
-  if (key === 'incomePath') return t('incomePath');
-  if (key === 'annualIncome' && facts.annualIncome == null) return t('girlIncome');
-  return labelName(key);
+// Fact Confirmation Screen
+function renderFactConfirmation() {
+  const resultsEl = $('#results');
+  const yesNoSelect = (factKey, val) => `
+    <select data-fact="${factKey}">
+      <option value="unknown" ${val == null ? 'selected' : ''}>${lang === 'mr' ? 'माहित नाही' : lang === 'hi' ? 'पता नहीं' : 'Not stated'}</option>
+      <option value="yes" ${val === true ? 'selected' : ''}>${lang === 'mr' ? 'होय (Yes)' : lang === 'hi' ? 'हाँ (Yes)' : 'Yes'}</option>
+      <option value="no" ${val === false ? 'selected' : ''}>${lang === 'mr' ? 'नाही (No)' : lang === 'hi' ? 'नहीं (No)' : 'No'}</option>
+    </select>
+  `;
+
+  const fields = [
+    ['farmer', lang === 'mr' ? 'शेतकरी कुटुंब (Farmer)' : 'Farmer Family'],
+    ['landOwned', lang === 'mr' ? 'स्वतःची शेतीजमीन (Owns Land)' : 'Owns Agricultural Land'],
+    ['hasGirlChild', lang === 'mr' ? 'कुटुंबात मुलगी आहे (Girl child)' : 'Girl Child in Family'],
+    ['rationCardEligible', lang === 'mr' ? 'पिवळे / केशरी रेशन कार्ड (Ration Card)' : 'Yellow / Orange Ration Card'],
+    ['bpl', lang === 'mr' ? 'दारिद्र्यरेषेखालील (BPL Family)' : 'BPL Household'],
+    ['supportNeed', lang === 'mr' ? 'निराधार / विधवा / दिव्यांग (Support Need)' : 'Destitute / Widow / Disability'],
+    ['incomeTaxPayer', lang === 'mr' ? 'आयकर भरतात (Pays Income Tax)' : 'Pays Income Tax'],
+    ['governmentEmployee', lang === 'mr' ? 'नियमित सरकारी कर्मचारी (Govt Job)' : 'Government Employee']
+  ];
+
+  resultsEl.innerHTML = `
+    <div class="results-header">
+      <div>
+        <span class="section-kicker">${t('step2')}</span>
+        <h2>${t('confirmDetails')}</h2>
+        <p>${t('factReviewHint')}</p>
+      </div>
+      <div class="results-actions">
+        <button class="secondary-button" id="editStoryBtn">${t('editDetails')}</button>
+      </div>
+    </div>
+
+    <div class="results-panel">
+      <div class="fact-grid">
+        ${fields.map(([k, label]) => `
+          <div class="fact-row">
+            <span>${label}</span>
+            ${yesNoSelect(k, currentFacts[k] ?? null)}
+          </div>
+        `).join('')}
+
+        <div class="fact-row">
+          <span>${lang === 'mr' ? 'वय (Age in years)' : 'Age (years)'}</span>
+          <input type="number" data-number="age" min="0" max="110" value="${currentFacts.age ?? ''}" placeholder="उदा. 42" />
+        </div>
+
+        <div class="fact-row">
+          <span>${lang === 'mr' ? 'वार्षिक उत्पन्न ₹ (Annual Income)' : 'Annual Income ₹'}</span>
+          <input type="number" data-number="annualIncome" min="0" value="${currentFacts.annualIncome ?? ''}" placeholder="उदा. 120000" />
+        </div>
+      </div>
+
+      <div class="panel-footer">
+        <div class="secure-label">
+          <span>✓</span>
+          <span>${t('rulesFirst')}</span>
+        </div>
+        <button id="runRulesBtn" class="primary-button">
+          <span>${t('runRules')}</span>
+          <span class="arrow-icon">→</span>
+        </button>
+      </div>
+    </div>
+  `;
+
+  $('#editStoryBtn').onclick = () => {
+    $('#intakePanel').classList.remove('hidden');
+    $('#results').classList.add('hidden');
+    $('#progressBar').style.width = '35%';
+    $('#stepLabel').textContent = t('step1');
+  };
+
+  $('#runRulesBtn').onclick = () => {
+    // Read updated facts
+    resultsEl.querySelectorAll('[data-fact]').forEach(sel => {
+      const k = sel.dataset.fact;
+      currentFacts[k] = sel.value === 'unknown' ? null : sel.value === 'yes';
+    });
+    resultsEl.querySelectorAll('[data-number]').forEach(inp => {
+      const k = inp.dataset.number;
+      currentFacts[k] = inp.value === '' ? null : Number(inp.value);
+    });
+
+    currentMatches = matchSchemes(currentFacts);
+    $('#progressBar').style.width = '100%';
+    $('#progressHint').textContent = `${currentMatches.length} ${t('matchesFound')}`;
+    renderResults(currentFacts, currentMatches);
+  };
 }
 
-function renderSchemeCard(scheme, evaluation, mode = 'catalog') {
-  const isSaved = saved.has(scheme.id);
-  const status = evaluation?.status;
-  const eligible = status === 'eligible';
-  const needs = status === 'needs-info';
-  const statusHtml = !evaluation ? `<div class="eligibility-state"><span class="state-mark">i</span><span>${t('ruleCta')}</span></div>` : eligible ? `<div class="eligibility-state match"><span class="state-mark">✓</span><span>${t('statusEligible')}</span></div>` : needs ? `<div class="eligibility-state partial"><span class="state-mark">◷</span><span>${t('missingPrefix')} ${evaluation.missing.map(formatMissing).join(' · ')}</span></div>` : '';
-  const docList = schemeDocs(scheme);
-  const why = eligible ? `<ul class="why-list">${schemeChecks(scheme).map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul><p class="scheme-caveat">${escapeHtml(scheme.note || t('footerDisclaimer'))}</p>` : '';
-  const buttonDraft = mode === 'result' ? `<button class="small-button primary-small" data-draft="${scheme.id}">${t('prepare')} →</button>` : '';
-  return `<article class="scheme-card" data-scheme-card="${scheme.id}">
-    <div class="scheme-card-top"><span class="scheme-icon" aria-hidden="true">${scheme.categoryIcon}</span><div class="scheme-card-meta"><span class="category-label">${escapeHtml(categoryName(scheme.categoryId))}</span><h3>${escapeHtml(schemeName(scheme))}</h3></div><button class="scheme-save ${isSaved ? 'is-saved' : ''}" data-save="${scheme.id}" aria-label="${isSaved ? t('savedScheme') : t('saveScheme')}">${isSaved ? '♥' : '♡'}</button></div>
-    <div class="benefit-line"><span class="benefit-value">${escapeHtml(schemeAmount(scheme))}</span><span class="benefit-hint">${escapeHtml(schemeSummary(scheme).split('.')[0])}</span></div>
-    <p class="scheme-summary">${escapeHtml(schemeSummary(scheme))}</p>
-    ${statusHtml}
-    ${why ? `<div class="why-block"><strong>${t('whyFits')}</strong>${why}</div>` : ''}
-    <div class="doc-preview"><strong>${t('documents')}</strong><div class="doc-chips">${docList.map(doc => `<span class="doc-chip">${escapeHtml(doc)}</span>`).join('')}</div></div>
-    <div class="scheme-card-footer"><a class="official-link" href="${scheme.url}" target="_blank" rel="noopener noreferrer">${t('officialSource')}: ${escapeHtml(scheme.sourceLabel)} <span>↗</span></a><div class="card-actions">${buttonDraft}<button class="small-button" data-save-text="${scheme.id}">${isSaved ? t('savedScheme') : t('saveScheme')}</button></div></div>
-  </article>`;
-}
+// Render Schemes Results
+function renderResults(facts, matches) {
+  const resultsEl = $('#results');
 
-function bindSchemeActions(root) {
-  root.querySelectorAll('[data-save],[data-save-text]').forEach(button => button.addEventListener('click', () => toggleSaved(button.dataset.save || button.dataset.saveText)));
-  root.querySelectorAll('[data-draft]').forEach(button => button.addEventListener('click', () => createDraft(button.dataset.draft)));
-}
+  let cardsHtml = '';
+  if (!matches.length) {
+    cardsHtml = `
+      <div class="no-match-box">
+        <div class="no-icon">🔍</div>
+        <h3>${t('noMatchTitle')}</h3>
+        <p>${t('noMatchDesc')}</p>
+        <button class="primary-button" id="backToEditBtn">${t('editDetails')}</button>
+      </div>
+    `;
+  } else {
+    cardsHtml = matches.map(scheme => {
+      const isSaved = savedSchemes.has(scheme.id);
+      const categoryText = lang === 'mr' ? scheme.categoryMr || scheme.category : lang === 'hi' ? scheme.categoryHi || scheme.category : scheme.category;
+      const amountText = lang === 'mr' ? scheme.amountMr || scheme.amount : lang === 'hi' ? scheme.amountHi || scheme.amount : scheme.amount;
+      const summaryText = lang === 'mr' ? scheme.summaryMr || scheme.summary : lang === 'hi' ? scheme.summaryHi || scheme.summary : scheme.summary;
+      const checks = lang === 'mr' ? scheme.checksMr || scheme.checks : lang === 'hi' ? scheme.checksHi || scheme.checks : scheme.checks;
+      const docs = lang === 'mr' ? scheme.docsMr || scheme.docs : lang === 'hi' ? scheme.docsHi || scheme.docs : scheme.docs;
 
-function toggleSaved(id) {
-  if (saved.has(id)) { saved.delete(id); toast(t('removedToast')); }
-  else { saved.add(id); toast(t('savedToast')); }
-  localStorage.setItem('ss-saved', JSON.stringify([...saved]));
-  $('#savedCount').textContent = saved.size;
-  renderCatalog(); renderSaved();
-  if (facts) renderResults();
-}
+      return `
+        <article class="match-card" data-scheme-id="${scheme.id}">
+          <div class="match-top">
+            <div class="scheme-icon">${scheme.categoryIcon || '🏛️'}</div>
+            <div class="scheme-heading">
+              <div class="category-label">${scheme.level} · ${categoryText}</div>
+              <h3>${scheme.name}</h3>
+            </div>
+            <span class="match-badge">✓ ${lang === 'mr' ? 'पात्र (Eligible)' : lang === 'hi' ? 'पात्र (Eligible)' : 'Eligible'}</span>
+          </div>
 
-function renderReviewFields() {
-  const box = document.createElement('div'); box.className = 'facts-grid'; buildFactFields(box, facts); return box.innerHTML;
-}
+          <div class="amount-row">
+            <span class="amount">${amountText}</span>
+            <span class="amount-label">${scheme.benefitDetail ? (lang === 'mr' ? scheme.benefitDetailMr : lang === 'hi' ? scheme.benefitDetailHi : scheme.benefitDetail) : ''}</span>
+          </div>
 
-function renderResults() {
-  if (!facts) return;
-  evaluations = evaluateCatalog(facts);
-  const candidates = evaluations.filter(result => result.status === 'eligible' || result.status === 'needs-info');
-  const confirmed = candidates.filter(result => result.status === 'eligible');
-  const needs = candidates.filter(result => result.status === 'needs-info');
-  const empty = `<div class="result-empty"><strong>${t('noCandidates')}</strong>${t('noCandidatesHelp')} <button class="text-button" data-go="explore">${t('exploreSchemes')} →</button></div>`;
-  $('#resultsContent').innerHTML = `<div class="results-hero"><div><span class="section-label">${t('reviewLabel')}</span><h1>${confirmed.length ? `${confirmed.length} ${t('matchesCount')}` : t('notConfirmed')}</h1><p>${t('shownResults')}</p></div><div class="results-toolbar"><button class="secondary-button" id="readResultsBtn">◖ ${t('readResults')}</button><button class="secondary-button" id="printResultsBtn">▤ ${t('printResults')}</button><button class="secondary-button" id="downloadFactsBtn">↓ ${t('downloadJson')}</button></div></div>
-    <section class="review-panel" aria-labelledby="reviewDetailsTitle"><div class="review-panel-head"><div><h2 id="reviewDetailsTitle">${t('reviewTitle')}</h2><p>${t('reviewSubtitle')}</p></div><button class="text-button" id="editStoryBtn">${t('editStory')}</button></div><div id="resultFacts" class="facts-grid">${renderReviewFields()}</div><div class="review-actions"><button id="updateResultsBtn" class="primary-button">${t('applyRules')} <span class="button-arrow">→</span></button></div></section>
-    <div class="result-columns"><section><h2 class="column-heading"><span>✓</span>${t('eligibleHeading')} (${confirmed.length})</h2>${confirmed.length ? `<div class="catalog-grid single">${confirmed.map(result => renderSchemeCard(result.scheme, result, 'result')).join('')}</div>` : empty}</section><section><h2 class="column-heading needs"><span>◷</span>${t('needHeading')} (${needs.length})</h2>${needs.length ? `<div class="catalog-grid single">${needs.map(result => renderSchemeCard(result.scheme, result, 'result')).join('')}</div>` : `<div class="result-empty"><strong>${t('noSearchResults')}</strong>${t('ruleCta')}</div>`}</section></div><p class="disclaimer">${t('footerDisclaimer')} ${t('catalogNote')}</p>`;
-  bindSchemeActions($('#resultsContent'));
-  $('#updateResultsBtn').onclick = () => { facts = collectFacts($('#resultFacts')); renderResults(); toast(t('detailsUpdated')); };
-  $('#editStoryBtn').onclick = () => { openView('discover'); $('#story').focus(); };
-  $('#readResultsBtn').onclick = readAloud;
-  $('#printResultsBtn').onclick = () => window.print();
-  $('#downloadFactsBtn').onclick = downloadFacts;
-  $('#resultsContent').querySelector('[data-go="explore"]')?.addEventListener('click', () => openView('explore'));
-}
+          <p class="scheme-desc">${summaryText}</p>
 
-function readAloud() {
-  if (!('speechSynthesis' in window)) { toast(t('voiceUnavailable')); return; }
-  const confirmed = evaluations.filter(item => item.status === 'eligible');
-  if (!confirmed.length) { toast(t('nothingToRead')); return; }
-  const text = confirmed.map(({scheme}) => `${schemeName(scheme)}. ${schemeSummary(scheme)}. ${t('whyFits')}: ${schemeChecks(scheme).join('. ')}. ${t('documents')}: ${schemeDocs(scheme).join(', ')}`).join('. ');
-  window.speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(text); utterance.lang = lang === 'mr' ? 'mr-IN' : lang === 'hi' ? 'hi-IN' : 'en-IN'; utterance.rate = .87; window.speechSynthesis.speak(utterance);
-}
+          <div class="match-why">
+            <div class="why-title">${t('whyFit')}:</div>
+            <ul class="why-list">
+              ${checks.map(c => `<li>${c}</li>`).join('')}
+            </ul>
+          </div>
 
-function renderCategoryFilters() {
-  const target = $('#categoryFilters'); if (!target) return;
-  const options = [['all','filterAll'],['farming','filterFarming'],['family','filterFamily'],['support','filterSupport'],['senior','filterSenior'],['health','filterHealth'],['energy','filterEnergy']];
-  target.innerHTML = options.map(([id,label]) => `<button class="filter-chip ${filterCategory === id ? 'active' : ''}" data-filter="${id}" aria-pressed="${filterCategory === id}">${t(label)}</button>`).join('');
-  target.querySelectorAll('[data-filter]').forEach(button => button.onclick = () => { filterCategory = button.dataset.filter; renderCategoryFilters(); renderCatalog(); });
-}
+          <div class="docs-area">
+            <div class="docs-title">${t('mandatoryDocs')}:</div>
+            <div class="docs-list">
+              ${docs.map(d => `<span class="doc-chip">${d}</span>`).join('')}
+            </div>
+          </div>
 
-function renderCatalog() {
-  const grid = $('#catalogGrid'); if (!grid) return;
-  const matches = schemes.filter(scheme => {
-    const categoryMatches = filterCategory === 'all' || scheme.categoryId === filterCategory;
-    const haystack = `${scheme.name} ${scheme.shortName} ${scheme.category} ${scheme.summary} ${scheme.summaryHi || ''} ${scheme.summaryMr || ''}`.toLocaleLowerCase();
-    return categoryMatches && haystack.includes(searchQuery.toLocaleLowerCase());
+          <div class="match-bottom">
+            <a class="source-link" href="${scheme.url}" target="_blank" rel="noopener">
+              🏛️ ${t('officialSource')}: ${scheme.sourceLabel} ↗
+            </a>
+            <div class="match-bottom-actions">
+              <button class="audio-play-btn" data-audio-scheme="${scheme.id}" title="Listen in your language">
+                ${t('listenVoice')}
+              </button>
+              <button class="save-button ${isSaved ? 'saved' : ''}" data-save-id="${scheme.id}">
+                ${isSaved ? t('savedScheme') : t('saveScheme')}
+              </button>
+              <button class="fill-form-btn" data-form-scheme="${scheme.id}">
+                ${t('prefillForm')}
+              </button>
+            </div>
+          </div>
+        </article>
+      `;
+    }).join('');
+  }
+
+  resultsEl.innerHTML = `
+    <div class="results-header">
+      <div>
+        <span class="section-kicker">${t('resultsLabel')}</span>
+        <h2>${matches.length} ${t('matchesFound')}</h2>
+        <p>${t('trustRules')} · ${t('trustSources')}</p>
+      </div>
+      <div class="results-actions">
+        <button class="secondary-button" id="readAllResultsBtn">${t('readResultsAloud')}</button>
+        <button class="secondary-button" id="editInputsBtn">${t('editDetails')}</button>
+      </div>
+    </div>
+    ${cardsHtml}
+    <p class="disclaimer">${t('disclaimer')}</p>
+  `;
+
+  // Attach event handlers
+  $('#readAllResultsBtn').onclick = readAllResultsAloud;
+  $('#editInputsBtn').onclick = () => {
+    $('#intakePanel').classList.remove('hidden');
+    $('#results').classList.add('hidden');
+    $('#progressBar').style.width = '35%';
+    $('#stepLabel').textContent = t('step1');
+  };
+
+  const backBtn = $('#backToEditBtn');
+  if (backBtn) backBtn.onclick = $('#editInputsBtn').onclick;
+
+  $$('[data-save-id]').forEach(b => {
+    b.onclick = () => toggleSaveScheme(b.dataset.saveId);
   });
-  grid.innerHTML = matches.length ? matches.map(scheme => renderSchemeCard(scheme, facts ? evaluateScheme(scheme, facts) : null)).join('') : `<div class="no-results"><strong>${t('noSearchResults')}</strong><br />${t('noSearchHelp')}</div>`;
-  bindSchemeActions(grid);
+
+  $$('[data-audio-scheme]').forEach(b => {
+    b.onclick = () => readSchemeAloud(b.dataset.audioScheme);
+  });
+
+  $$('[data-form-scheme]').forEach(b => {
+    b.onclick = () => openOfficialApplicationModal(b.dataset.formScheme);
+  });
 }
 
+// Text-To-Speech (TTS) Voice Readout for low-literacy users
+function readSchemeAloud(schemeId) {
+  if (!('speechSynthesis' in window)) {
+    showToast('Speech synthesis not supported on this browser.');
+    return;
+  }
+  window.speechSynthesis.cancel();
+
+  const scheme = schemes.find(s => s.id === schemeId);
+  if (!scheme) return;
+
+  const explanation = generateCitizenExplanation(scheme, currentFacts || {}, lang);
+  const reasonsText = explanation.reasons.slice(0, 3).join('. ');
+  const docsText = (lang === 'mr' ? scheme.docsMr : lang === 'hi' ? scheme.docsHi : scheme.docs).slice(0, 4).join(', ');
+
+  const speechText = lang === 'mr'
+    ? `${scheme.name}. ${scheme.summaryMr}. लाभ: ${scheme.amountMr}. पात्रतेची कारणे: ${reasonsText}. आवश्यक कागदपत्रे: ${docsText}.`
+    : lang === 'hi'
+    ? `${scheme.name}. ${scheme.summaryHi}. लाभ: ${scheme.amountHi}. पात्रता के कारण: ${reasonsText}. आवश्यक कागज़ात: ${docsText}.`
+    : `${scheme.name}. ${scheme.summary}. Benefit: ${scheme.amount}. Reasons you qualify: ${reasonsText}. Mandatory documents: ${docsText}.`;
+
+  const utterance = new SpeechSynthesisUtterance(speechText);
+  utterance.lang = lang === 'mr' ? 'mr-IN' : lang === 'hi' ? 'hi-IN' : 'en-IN';
+  utterance.rate = 0.9;
+  window.speechSynthesis.speak(utterance);
+  showToast(`🔊 Reading ${scheme.name} aloud...`);
+}
+
+function readAllResultsAloud() {
+  if (!('speechSynthesis' in window)) {
+    showToast('Speech synthesis not supported on this browser.');
+    return;
+  }
+  window.speechSynthesis.cancel();
+
+  if (!currentMatches.length) {
+    const u = new SpeechSynthesisUtterance(lang === 'mr' ? 'कोणतीही योजना जुळलेली नाही.' : 'No schemes matched.');
+    window.speechSynthesis.speak(u);
+    return;
+  }
+
+  const summaries = currentMatches.map((s, idx) => {
+    const amt = lang === 'mr' ? s.amountMr : lang === 'hi' ? s.amountHi : s.amount;
+    return `${idx + 1}. ${s.name}, ${amt}`;
+  }).join('. ');
+
+  const fullText = lang === 'mr'
+    ? `आपल्यासाठी एकूण ${currentMatches.length} योजना सापडल्या आहेत. ${summaries}. अधिक माहितीसाठी योजनेच्या कार्डवरील बोलून ऐका बटण दाबा.`
+    : `Found ${currentMatches.length} schemes for you. ${summaries}.`;
+
+  const utterance = new SpeechSynthesisUtterance(fullText);
+  utterance.lang = lang === 'mr' ? 'mr-IN' : lang === 'hi' ? 'hi-IN' : 'en-IN';
+  utterance.rate = 0.9;
+  window.speechSynthesis.speak(utterance);
+}
+
+// Toggle Save Scheme
+function toggleSaveScheme(schemeId) {
+  if (savedSchemes.has(schemeId)) {
+    savedSchemes.delete(schemeId);
+    showToast(t('removedToast'));
+  } else {
+    savedSchemes.add(schemeId);
+    showToast(t('addedToast'));
+  }
+  localStorage.setItem('ss-saved', JSON.stringify([...savedSchemes]));
+  $('#savedCount').textContent = savedSchemes.size;
+
+  if (currentFacts) renderResults(currentFacts, currentMatches);
+  renderSaved();
+}
+
+// Render Saved Schemes View
 function renderSaved() {
-  const target = $('#savedGrid'); if (!target) return;
-  const savedSchemes = schemes.filter(scheme => saved.has(scheme.id));
-  target.innerHTML = savedSchemes.length ? savedSchemes.map(scheme => renderSchemeCard(scheme, facts ? evaluateScheme(scheme, facts) : null)).join('') : `<div class="saved-empty"><span class="empty-heart">♡</span><strong>${t('emptySaved')}</strong><p>${t('emptySavedText')}</p><button class="text-button" data-go="explore">${t('exploreSchemes')} →</button></div>`;
-  bindSchemeActions(target); target.querySelector('[data-go="explore"]')?.addEventListener('click', () => openView('explore'));
+  const el = $('#savedList');
+  if (!el) return;
+  $('#savedCount').textContent = savedSchemes.size;
+
+  if (!savedSchemes.size) {
+    el.innerHTML = `
+      <div class="empty-state">
+        <span class="empty-icon">♡</span>
+        <strong>${lang === 'mr' ? 'अजून कोणतीही योजना जतन केलेली नाही' : 'No saved schemes yet'}</strong>
+        <p>${lang === 'mr' ? 'योजना शोधून निकालांमधून योजना जतन करा.' : 'Search for schemes and save them here.'}</p>
+      </div>
+    `;
+    return;
+  }
+
+  el.innerHTML = [...savedSchemes].map(id => {
+    const s = schemes.find(x => x.id === id);
+    if (!s) return '';
+    const amt = lang === 'mr' ? s.amountMr : s.amount;
+    return `
+      <div class="saved-row">
+        <div>
+          <span class="category-label">${s.level} · ${s.category}</span>
+          <h3>${s.name}</h3>
+          <small>${amt} · <a href="${s.url}" target="_blank" rel="noopener">Official Portal ↗</a></small>
+        </div>
+        <div class="saved-row-actions">
+          <button class="fill-form-btn" data-form-scheme="${s.id}">${t('prefillForm')}</button>
+          <button class="save-button saved" data-unsave-id="${s.id}">✕ Remove</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  $$('#savedList [data-unsave-id]').forEach(b => {
+    b.onclick = () => toggleSaveScheme(b.dataset.unsaveId);
+  });
+  $$('#savedList [data-form-scheme]').forEach(b => {
+    b.onclick = () => openOfficialApplicationModal(b.dataset.formScheme);
+  });
 }
 
-function createDraft(schemeId) {
-  if (!drafts.some(draft => draft.schemeId === schemeId)) {
-    drafts.unshift({ id:crypto.randomUUID(), schemeId, checked:[], applicant:'', district:'', village:'', notes:'', profile:{ age:facts?.age ?? null, annualIncome:facts?.annualIncome ?? null, state:facts?.state ?? null }, created:new Date().toISOString() });
+// Render Drafts View
+function renderDrafts() {
+  const el = $('#applicationList');
+  if (!el) return;
+
+  if (!drafts.length) {
+    el.innerHTML = `
+      <div class="empty-state">
+        <span class="empty-icon">▤</span>
+        <strong>${lang === 'mr' ? 'अजून कोणताही अर्ज तयार केलेला नाही' : 'No application drafts yet'}</strong>
+        <p>${lang === 'mr' ? 'पात्र योजनेच्या खाली "अधिकृत अर्ज तयार करा" बटण दाबून अर्ज सुरू करा.' : 'Click "Pre-fill Application Form" on any eligible scheme to create a draft.'}</p>
+      </div>
+    `;
+    return;
+  }
+
+  el.innerHTML = drafts.map(d => {
+    const s = schemes.find(x => x.id === d.schemeId);
+    if (!s) return '';
+    return `
+      <article class="draft-card" data-draft-id="${d.id}">
+        <span class="category-label">${s.level} · ${s.category}</span>
+        <h3>${s.name}</h3>
+        <p>Application Ref: <strong>${d.refId || 'MH-SS-2026-901'}</strong> · Generated on ${new Date(d.createdAt).toLocaleDateString()}</p>
+        <div class="match-bottom-actions" style="margin-top: 10px;">
+          <button class="fill-form-btn" data-form-scheme="${s.id}">Open Printable Form</button>
+          <button class="secondary-button" data-delete-draft="${d.id}">Delete Draft</button>
+        </div>
+      </article>
+    `;
+  }).join('');
+
+  $$('#applicationList [data-form-scheme]').forEach(b => {
+    b.onclick = () => openOfficialApplicationModal(b.dataset.formScheme);
+  });
+  $$('#applicationList [data-delete-draft]').forEach(b => {
+    b.onclick = () => {
+      drafts = drafts.filter(x => x.id !== b.dataset.deleteDraft);
+      localStorage.setItem('ss-drafts', JSON.stringify(drafts));
+      renderDrafts();
+      showToast('Draft deleted.');
+    };
+  });
+}
+
+// OFFICIAL APPLICATION FORM GENERATOR & MODAL
+function openOfficialApplicationModal(schemeId) {
+  const scheme = schemes.find(s => s.id === schemeId);
+  if (!scheme) return;
+
+  const csc = getCscProfile();
+  const facts = currentFacts || {};
+
+  // Fill in modal values
+  $('#modalSchemeName').textContent = `${scheme.name} — ${lang === 'mr' ? 'अधिकृत अर्ज' : 'Official Application Form'}`;
+  $('#modalDeptName').textContent = scheme.source;
+  $('#printSchemeTitle').textContent = `APPLICATION FOR ${scheme.name.toUpperCase()}`;
+
+  const refNumber = `MH-SS-2026-${Math.floor(100000 + Math.random() * 900000)}`;
+  $('#formAppId').textContent = refNumber;
+
+  // CSC Header
+  $('#formCscName').textContent = csc.centerName;
+  $('#formCscDetails').textContent = `VLE ID: ${csc.vleId} · Operator: ${csc.operatorName} · Phone: ${csc.contactPhone} · ${csc.taluka}, ${csc.district}`;
+
+  // Applicant Profile
+  const genderStr = facts.gender === 'female' ? 'Female (महिला)' : facts.gender === 'male' ? 'Male (पुरुष)' : 'Citizen (नागरिक)';
+  $('#formApplicantName').textContent = facts.gender === 'female' ? 'श्रीमती [Citizen Applicant]' : 'श्री / श्रीमती [Citizen Applicant]';
+  $('#formApplicantAge').textContent = facts.age ? `${facts.age} Years (${facts.age} वर्षे)` : '42 Years (वयाचा दाखला संलग्न)';
+  $('#formApplicantGender').textContent = genderStr;
+  $('#formApplicantCategory').textContent = facts.bpl ? 'BPL / SECC Priority' : 'General / OBC / SC / ST';
+  $('#formApplicantAddress').textContent = `Village / Ward, Taluka ${csc.taluka}, District ${csc.district}, Maharashtra`;
+
+  // Criteria
+  const inc = facts.annualIncome ? `₹ ${facts.annualIncome.toLocaleString('en-IN')} /-` : '₹ 1,20,000 /- (Under Limit)';
+  $('#formApplicantIncome').textContent = inc;
+  $('#formApplicantRation').textContent = facts.rationCardType ? `${facts.rationCardType} Ration Card` : 'Orange / Yellow Ration Card';
+  $('#formApplicantLand').textContent = facts.landAcre ? `${facts.landAcre} Acres (7/12 Gut No. 142)` : (facts.landOwned ? 'Cultivable Land (7/12 attached)' : 'Not Applicable');
+
+  // Documents checklist
+  const docs = lang === 'mr' ? scheme.docsMr || scheme.docs : scheme.docs;
+  $('#formDocsChecklist').innerHTML = docs.map(d => `
+    <div class="form-doc-item">
+      <input type="checkbox" checked />
+      <span>${d}</span>
+    </div>
+  `).join('');
+
+  // Save to drafts if not already saved
+  if (!drafts.some(d => d.schemeId === scheme.id)) {
+    drafts.push({
+      id: crypto.randomUUID(),
+      schemeId: scheme.id,
+      refId: refNumber,
+      createdAt: new Date().toISOString()
+    });
     localStorage.setItem('ss-drafts', JSON.stringify(drafts));
   }
-  toast(t('draftCreated')); openView('applications');
+
+  const modal = $('#applicationFormModal');
+  modal.showModal();
 }
 
-function renderApplications() {
-  const target = $('#applicationList'); if (!target) return;
-  if (!drafts.length) { target.innerHTML = `<div class="saved-empty"><span class="empty-heart">▤</span><strong>${t('emptyApplications')}</strong><p>${t('emptyApplicationsText')}</p><button class="text-button" data-go="explore">${t('exploreSchemes')} →</button></div>`; target.querySelector('[data-go]')?.addEventListener('click', () => openView('explore')); return; }
-  target.innerHTML = drafts.map(draft => {
-    const scheme = schemes.find(item => item.id === draft.schemeId); if (!scheme) return '';
-    const docs = schemeDocs(scheme); const checked = new Set(draft.checked || []); const percent = docs.length ? Math.round(checked.size / docs.length * 100) : 0;
-    const profile = draft.profile || {};
-    return `<article class="draft-card" data-card="${draft.id}"><div class="draft-header"><div><span class="category-label">${escapeHtml(categoryName(scheme.categoryId))} · ${t('draftStatus')}</span><h2>${escapeHtml(schemeName(scheme))}</h2><p>${t('notSubmit')} <a class="official-link" href="${scheme.url}" target="_blank" rel="noopener noreferrer">${t('officialSource')} ↗</a></p></div><div class="draft-controls"><button class="small-button" data-print="${draft.id}">▤ ${t('printDraft')}</button><button class="small-button" data-delete="${draft.id}">${t('deleteDraft')}</button></div></div><div class="draft-divider"></div><div class="draft-body"><div><div class="draft-section-title">${t('documentsDone')}</div><div class="draft-checklist">${docs.map((doc,index) => `<label><input type="checkbox" data-check="${index}" ${checked.has(index) ? 'checked' : ''} /> ${escapeHtml(doc)}</label>`).join('')}</div><div class="draft-progress">${t('progressLabel')}: ${checked.size} ${t('progressOf')} ${docs.length}</div><div class="draft-progress-track"><span style="width:${percent}%"></span></div></div><div><div class="draft-section-title">${t('draftFormTitle')}</div><div class="draft-form"><label>${t('applicantName')}<input data-draft-field="applicant" value="${escapeHtml(draft.applicant)}" autocomplete="name" /></label><label>${t('district')}<input data-draft-field="district" value="${escapeHtml(draft.district)}" /></label><label>${t('village')}<input data-draft-field="village" value="${escapeHtml(draft.village)}" /></label><label>${t('ageYears')}<input data-draft-field="age" type="number" min="0" max="120" value="${profile.age ?? ''}" /></label><label>${t('incomeRupees')}<input data-draft-field="annualIncome" type="number" min="0" value="${profile.annualIncome ?? ''}" /></label><label>${t('schemeInterest')}<input value="${escapeHtml(schemeName(scheme))}" readonly /></label><label class="notes-field">${t('notesLabel')}<textarea data-draft-field="notes" placeholder="${t('notesPlaceholder')}">${escapeHtml(draft.notes)}</textarea></label></div></div></div><p class="draft-note">${t('localOnly')} · ${t('printDisclaimer')}</p></article>`;
+// PRICING CARDS & SUBSCRIPTION MODAL
+function renderPricingCards() {
+  const container = $('#pricingCardsContainer');
+  if (!container) return;
+
+  const currentPlan = getCurrentPlan();
+  const plansList = Object.values(SUBSCRIPTION_PLANS);
+
+  container.innerHTML = plansList.map(plan => {
+    const isCurrent = plan.id === currentPlan.id;
+    const price = isYearlyBilling ? plan.priceYearly : plan.priceMonthly;
+    const periodLabel = isYearlyBilling ? (lang === 'mr' ? '/ वर्ष' : '/ year') : (lang === 'mr' ? '/ महिना' : '/ month');
+    const name = lang === 'mr' ? plan.nameMr : lang === 'hi' ? plan.nameHi : plan.name;
+    const tagline = lang === 'mr' ? plan.taglineMr : lang === 'hi' ? plan.taglineHi : plan.tagline;
+
+    return `
+      <div class="pricing-card ${plan.popular ? 'popular' : ''}">
+        ${plan.popular ? `<div class="popular-ribbon">MOST POPULAR · सर्वाधिक पसंती</div>` : ''}
+        <div class="category-label" style="color: ${plan.color};">${plan.badge}</div>
+        <h3 class="pricing-title">${name}</h3>
+        <p class="pricing-tagline">${tagline}</p>
+
+        <div class="pricing-amount-block">
+          <span class="price-currency">₹</span>
+          <span class="price-number">${price}</span>
+          <span class="price-cycle">${price === 0 ? (lang === 'mr' ? 'कायम मोफत' : 'Forever') : periodLabel}</span>
+        </div>
+
+        <ul class="features-list">
+          ${plan.features.map(f => `<li>${lang === 'mr' ? f.mr || f.text : lang === 'hi' ? f.hi || f.text : f.text}</li>`).join('')}
+        </ul>
+
+        <button class="plan-select-btn ${isCurrent ? 'active-plan-btn' : ''}" data-select-plan="${plan.id}" ${isCurrent ? 'disabled' : ''}>
+          ${isCurrent ? (lang === 'mr' ? '✓ चालू सदस्यता (Current)' : '✓ Current Plan') : (lang === 'mr' ? 'निवडा व अपग्रेड करा →' : 'Choose Plan →')}
+        </button>
+      </div>
+    `;
   }).join('');
-  target.querySelectorAll('.draft-card').forEach(card => {
-    const draft = drafts.find(item => item.id === card.dataset.card);
-    card.querySelectorAll('[data-check]').forEach(input => input.onchange = () => { const i = Number(input.dataset.check); draft.checked = input.checked ? [...new Set([...draft.checked, i])] : draft.checked.filter(index => index !== i); persistDrafts(); renderApplications(); });
-    card.querySelectorAll('[data-draft-field]').forEach(input => input.oninput = () => { const key = input.dataset.draftField; if (key === 'age' || key === 'annualIncome') draft.profile[key] = input.value === '' ? null : Number(input.value); else draft[key] = input.value; persistDrafts(); });
-    card.querySelector('[data-print]').onclick = () => { $$('.draft-card').forEach(item => item.classList.remove('print-target')); card.classList.add('print-target'); window.print(); card.classList.remove('print-target'); };
-    card.querySelector('[data-delete]').onclick = () => { if (!confirm(t('confirmDeleteDraft'))) return; drafts = drafts.filter(item => item.id !== draft.id); persistDrafts(); renderApplications(); toast(t('draftDeleted')); };
+
+  $$('[data-select-plan]').forEach(b => {
+    b.onclick = () => initiatePlanUpgrade(b.dataset.selectPlan);
   });
 }
 
-function persistDrafts() { localStorage.setItem('ss-drafts', JSON.stringify(drafts)); }
-function downloadFacts() {
-  const blob = new Blob([JSON.stringify({ language:lang, reviewedAt:new Date().toISOString(), facts }, null, 2)], { type:'application/json' });
-  const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'scheme-saathi-profile.json'; anchor.click(); URL.revokeObjectURL(url);
+function initiatePlanUpgrade(planId) {
+  const plan = SUBSCRIPTION_PLANS[planId];
+  if (!plan) return;
+
+  if (planId === 'CITIZEN_FREE') {
+    setCurrentPlan('CITIZEN_FREE');
+    $('#roleSwitcher').value = 'CITIZEN_FREE';
+    updatePlanBadge();
+    renderPricingCards();
+    showToast(t('planActivatedToast'));
+    return;
+  }
+
+  pendingUpgradePlanId = planId;
+  const price = isYearlyBilling ? plan.priceYearly : plan.priceMonthly;
+  const cycle = isYearlyBilling ? '/ year' : '/ month';
+
+  $('#checkoutPlanTitle').textContent = `${plan.name} (${lang === 'mr' ? plan.nameMr : plan.name})`;
+  $('#checkoutPlanDesc').textContent = lang === 'mr' ? plan.taglineMr : plan.tagline;
+  $('#checkoutPriceVal').textContent = price;
+  $('#checkoutPeriod').textContent = cycle;
+  $('.qr-center').textContent = `₹${price}`;
+
+  $('#subscriptionModal').showModal();
 }
 
-function initVoice() {
-  const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!Speech) { toast(t('voiceUnavailable')); return; }
-  if (window._ssRecognition) { window._ssRecognition.stop(); return; }
-  const recognition = new Speech(); recognition.lang = lang === 'mr' ? 'mr-IN' : lang === 'hi' ? 'hi-IN' : 'en-IN'; recognition.interimResults = false; recognition.maxAlternatives = 1;
-  recognition.onresult = event => { $('#story').value = `${$('#story').value}${$('#story').value ? ' ' : ''}${event.results[0][0].transcript}`; $('#charCount').textContent = `${$('#story').value.length.toLocaleString()} / 6,000`; toast(t('voiceAdded')); };
-  recognition.onerror = () => toast(t('voiceUnavailable'));
-  recognition.onend = () => { $('#micBtn').classList.remove('recording'); $('#micBtn').querySelector('span').textContent = t('speak'); window._ssRecognition = null; };
-  window._ssRecognition = recognition; $('#micBtn').classList.add('recording'); $('#micBtn').querySelector('span').textContent = t('voiceListening'); recognition.start();
+function completeUpgrade() {
+  if (pendingUpgradePlanId) {
+    setCurrentPlan(pendingUpgradePlanId);
+    $('#roleSwitcher').value = pendingUpgradePlanId;
+    updatePlanBadge();
+    renderPricingCards();
+    $('#subscriptionModal').close();
+    showToast(`🎉 ${t('planActivatedToast')}`);
+  }
 }
 
-$$('[data-lang]').forEach(button => button.addEventListener('click', () => setLanguage(button.dataset.lang)));
-$$('.nav-link').forEach(button => button.addEventListener('click', () => openView(button.dataset.view)));
-$$('[data-view-link]').forEach(button => button.addEventListener('click', event => { event.preventDefault(); openView(button.dataset.viewLink); }));
-$$('[data-go]').forEach(button => button.addEventListener('click', () => openView(button.dataset.go)));
-$$('.moment-card').forEach(button => button.addEventListener('click', () => { filterCategory = button.dataset.category; openView('explore'); renderCategoryFilters(); renderCatalog(); }));
-$$('.example-chip').forEach(button => button.addEventListener('click', () => { $('#story').value = t(`example${button.dataset.example[0].toUpperCase()}${button.dataset.example.slice(1)}Text`); $('#charCount').textContent = `${$('#story').value.length.toLocaleString()} / 6,000`; $('#story').focus(); }));
-$('#story').addEventListener('input', () => { $('#charCount').textContent = `${$('#story').value.length.toLocaleString()} / 6,000`; });
-$('#checkBtn').addEventListener('click', analyzeStory);
-$('#micBtn').addEventListener('click', initVoice);
-$('#openGuided').addEventListener('click', showGuided);
-$('#openGuidedSecondary').addEventListener('click', showGuided);
-$('#closeGuided').addEventListener('click', () => $('#guidedDialog').close());
-$('#guidedForm').addEventListener('submit', event => { event.preventDefault(); facts = collectFacts($('#guidedFields')); $('#guidedDialog').close(); startReview(facts); });
-$('#schemeSearch').addEventListener('input', event => { searchQuery = event.target.value.trim(); renderCatalog(); });
-$('#textSizeBtn').addEventListener('click', () => { document.documentElement.classList.toggle('large-text'); localStorage.setItem('ss-large-text', document.documentElement.classList.contains('large-text') ? 'true' : 'false'); });
-$('#clearDrafts').addEventListener('click', () => { if (!drafts.length) return; if (!confirm(t('confirmClearDrafts'))) return; drafts = []; persistDrafts(); renderApplications(); toast(t('draftsCleared')); });
-$('#guideBtn').addEventListener('click', () => $('#guideDialog').showModal());
-$('#closeGuide').addEventListener('click', () => $('#guideDialog').close());
-$('#savedCount').textContent = saved.size;
-if (localStorage.getItem('ss-large-text') === 'true') document.documentElement.classList.add('large-text');
-setLanguage(lang); openView('discover'); renderCategoryFilters(); renderCatalog(); renderApplications();
+// CSC Center Profile Settings
+function loadCscProfileIntoUi() {
+  const csc = getCscProfile();
+  const nameEl = $('#cscCenterName');
+  if (nameEl) nameEl.value = csc.centerName;
+  const idEl = $('#cscVleId');
+  if (idEl) idEl.value = csc.vleId;
+  const opEl = $('#cscOperatorName');
+  if (opEl) opEl.value = csc.operatorName;
+  const phEl = $('#cscContactPhone');
+  if (phEl) phEl.value = csc.contactPhone;
+  const locEl = $('#cscLocation');
+  if (locEl) locEl.value = `${csc.taluka}, ${csc.district}, ${csc.state}`;
+}
+
+function saveCscProfileFromUi() {
+  const locParts = ($('#cscLocation').value || '').split(',').map(s => s.trim());
+  const profile = {
+    centerName: $('#cscCenterName').value,
+    vleId: $('#cscVleId').value,
+    operatorName: $('#cscOperatorName').value,
+    contactPhone: $('#cscContactPhone').value,
+    taluka: locParts[0] || 'Haveli',
+    district: locParts[1] || 'Pune',
+    state: locParts[2] || 'Maharashtra'
+  };
+  saveCscProfile(profile);
+  showToast('CSC Center profile saved and updated on application forms.');
+}
+
+// Speech Recognition (Voice Input)
+function setupVoiceInput() {
+  const micBtn = $('#micBtn');
+  const speechStatus = $('#speechStatus');
+
+  micBtn.addEventListener('click', () => {
+    const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Speech) {
+      showToast('Speech recognition is not supported in this browser. Try Google Chrome.');
+      return;
+    }
+
+    if (window._ssRecognition) {
+      window._ssRecognition.stop();
+      window._ssRecognition = null;
+      micBtn.classList.remove('recording');
+      speechStatus.classList.add('hidden');
+      return;
+    }
+
+    const rec = new Speech();
+    rec.lang = lang === 'mr' ? 'mr-IN' : lang === 'hi' ? 'hi-IN' : 'en-IN';
+    rec.interimResults = false;
+
+    rec.onstart = () => {
+      micBtn.classList.add('recording');
+      speechStatus.classList.remove('hidden');
+      $('#speechText').textContent = lang === 'mr' ? 'तुमचा आवाज ऐकत आहे... बोला.' : 'Listening to your voice...';
+    };
+
+    rec.onresult = (e) => {
+      const transcript = e.results[0][0].transcript;
+      const storyEl = $('#story');
+      storyEl.value += (storyEl.value ? ' ' : '') + transcript;
+      showToast(lang === 'mr' ? 'आवाज मजकुरात घेतला!' : 'Speech captured!');
+    };
+
+    rec.onerror = () => {
+      micBtn.classList.remove('recording');
+      speechStatus.classList.add('hidden');
+      window._ssRecognition = null;
+      showToast('Microphone error or permission denied.');
+    };
+
+    rec.onend = () => {
+      micBtn.classList.remove('recording');
+      speechStatus.classList.add('hidden');
+      window._ssRecognition = null;
+    };
+
+    rec.start();
+    window._ssRecognition = rec;
+  });
+}
+
+// Event Listeners
+function setupEventListeners() {
+  // Navigation tabs
+  $$('.nav-item').forEach(b => {
+    b.addEventListener('click', () => showView(b.dataset.view));
+  });
+
+  // Language buttons
+  $$('.language-switch button').forEach(b => {
+    b.addEventListener('click', () => updateLanguage(b.dataset.lang));
+  });
+
+  // Role selector
+  $('#roleSwitcher').addEventListener('change', (e) => {
+    setCurrentPlan(e.target.value);
+    updatePlanBadge();
+    renderPricingCards();
+    showToast(`Role switched to: ${e.target.value}`);
+  });
+
+  // Sample chips
+  $$('.sample-chip').forEach(b => {
+    b.addEventListener('click', () => applySampleStory(b.dataset.sample));
+  });
+
+  // Check schemes button
+  $('#checkBtn').addEventListener('click', analyzeStory);
+
+  // Guide dialog
+  $('#guideBtn').addEventListener('click', () => $('#guideDialog').showModal());
+  $('#closeGuide').addEventListener('click', () => $('#guideDialog').close());
+
+  // Modal close buttons
+  $('#closeModalBtn').addEventListener('click', () => $('#applicationFormModal').close());
+  $('#closeSubModalBtn').addEventListener('click', () => $('#subscriptionModal').close());
+
+  // Print button
+  $('#printFormBtn').addEventListener('click', () => window.print());
+
+  // Complete Payment button
+  $('#confirmPaymentBtn').addEventListener('click', completeUpgrade);
+
+  // Save CSC Profile
+  const saveCscBtn = $('#saveCscProfileBtn');
+  if (saveCscBtn) saveCscBtn.addEventListener('click', saveCscProfileFromUi);
+
+  // Billing period toggle
+  const toggle = $('#billingPeriodToggle');
+  if (toggle) {
+    toggle.addEventListener('change', (e) => {
+      isYearlyBilling = e.target.checked;
+      renderPricingCards();
+    });
+  }
+
+  // Setup Voice Input
+  setupVoiceInput();
+}
+
+// Start Application
+document.addEventListener('DOMContentLoaded', init);
